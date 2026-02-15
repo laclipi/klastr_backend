@@ -1,4 +1,3 @@
-
 package com.klastr.klastrbackend.dto;
 
 import lombok.Data;
@@ -7,4 +6,5 @@ import lombok.Data;
 public class CreateTenantRequest {
 
     private String name;
+
 }

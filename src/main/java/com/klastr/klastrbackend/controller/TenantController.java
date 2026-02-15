@@ -13,6 +13,7 @@ import com.klastr.klastrbackend.service.TenantService;
 
 @RestController
 @RequestMapping("/api/tenants")
+@CrossOrigin
 public class TenantController {
 
     private final TenantService tenantService;
@@ -34,9 +35,9 @@ public class TenantController {
     @GetMapping("/{id}")
     public ResponseEntity<Tenant> getById(@PathVariable UUID id) {
 
-        return tenantService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Tenant tenant = tenantService.findById(id);
+
+        return ResponseEntity.ok(tenant);
     }
 
     @GetMapping
