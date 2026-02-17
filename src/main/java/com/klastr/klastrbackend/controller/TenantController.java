@@ -11,6 +11,8 @@ import com.klastr.klastrbackend.domain.Tenant;
 import com.klastr.klastrbackend.dto.CreateTenantRequest;
 import com.klastr.klastrbackend.service.TenantService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/tenants")
 @CrossOrigin
@@ -23,7 +25,7 @@ public class TenantController {
     }
 
     @PostMapping
-    public ResponseEntity<Tenant> create(@RequestBody CreateTenantRequest request) {
+    public ResponseEntity<Tenant> create(@Valid @RequestBody CreateTenantRequest request) {
 
         Tenant created = tenantService.create(request);
 

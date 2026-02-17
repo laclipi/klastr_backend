@@ -21,6 +21,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 @Table(name = "tenants")
+
 public class Tenant {
 
     @Id

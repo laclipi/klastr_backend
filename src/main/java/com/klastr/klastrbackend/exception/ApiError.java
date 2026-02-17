@@ -9,6 +9,10 @@ public class ApiError {
     private String message;
     private String path;
 
+    // 🔥 Constructor vacío (OBLIGATORIO para Jackson)
+    public ApiError() {
+    }
+
     public ApiError(int status, String message, String path) {
         this.timestamp = LocalDateTime.now();
         this.status = status;

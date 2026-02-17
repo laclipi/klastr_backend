@@ -14,24 +14,24 @@ public class GlobalExceptionHandler {
     private static final Logger log
             = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // ✅ 404 — recurso no encontrado
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleNotFound(
-            ResourceNotFoundException ex,
+    // 🔥 Business errors (409, 400, etc)
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiError> handleBusiness(
+            BusinessException ex,
             HttpServletRequest request) {
 
         ApiError error = new ApiError(
-                HttpStatus.NOT_FOUND.value(),
+                ex.getStatus().value(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
 
         return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
+                .status(ex.getStatus())
                 .body(error);
     }
 
-    // ✅ 500 — error inesperado
+    // 🔥 System errors (500)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(
             Exception ex,
