@@ -1,10 +1,8 @@
 package com.klastr.klastrbackend.controller;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.klastr.klastrbackend.domain.Tenant;
@@ -15,7 +13,6 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/tenants")
-@CrossOrigin
 public class TenantController {
 
     private final TenantService tenantService;
@@ -25,26 +22,17 @@ public class TenantController {
     }
 
     @PostMapping
-    public ResponseEntity<Tenant> create(@Valid @RequestBody CreateTenantRequest request) {
-
-        Tenant created = tenantService.create(request);
-
-        return ResponseEntity
-                .created(URI.create("/api/tenants/" + created.getId()))
-                .body(created);
+    public Tenant create(@Valid @RequestBody CreateTenantRequest request) {
+        return tenantService.create(request);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Tenant> getById(@PathVariable UUID id) {
-
-        Tenant tenant = tenantService.findById(id);
-
-        return ResponseEntity.ok(tenant);
+    public Tenant findById(@PathVariable UUID id) {
+        return tenantService.findById(id);
     }
 
     @GetMapping
-    public ResponseEntity<List<Tenant>> list() {
-
-        return ResponseEntity.ok(tenantService.findAll());
+    public List<Tenant> findAll() {
+        return tenantService.findAll();
     }
 }

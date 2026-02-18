@@ -6,14 +6,10 @@ public class ApiError {
 
     private LocalDateTime timestamp;
     private int status;
-    private String message;
+    private Object message; // * CLAVE (antes String)
     private String path;
 
-    // 🔥 Constructor vacío (OBLIGATORIO para Jackson)
-    public ApiError() {
-    }
-
-    public ApiError(int status, String message, String path) {
+    public ApiError(int status, Object message, String path) {
         this.timestamp = LocalDateTime.now();
         this.status = status;
         this.message = message;
@@ -28,7 +24,7 @@ public class ApiError {
         return status;
     }
 
-    public String getMessage() {
+    public Object getMessage() {
         return message;
     }
 
