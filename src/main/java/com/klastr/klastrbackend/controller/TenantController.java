@@ -5,8 +5,8 @@ import java.util.UUID;
 
 import org.springframework.web.bind.annotation.*;
 
-import com.klastr.klastrbackend.domain.Tenant;
 import com.klastr.klastrbackend.dto.CreateTenantRequest;
+import com.klastr.klastrbackend.dto.TenantResponse;
 import com.klastr.klastrbackend.service.TenantService;
 
 import jakarta.validation.Valid;
@@ -22,17 +22,17 @@ public class TenantController {
     }
 
     @PostMapping
-    public Tenant create(@Valid @RequestBody CreateTenantRequest request) {
+    public TenantResponse create(@Valid @RequestBody CreateTenantRequest request) {
         return tenantService.create(request);
     }
 
     @GetMapping("/{id}")
-    public Tenant findById(@PathVariable UUID id) {
+    public TenantResponse findById(@PathVariable UUID id) {
         return tenantService.findById(id);
     }
 
     @GetMapping
-    public List<Tenant> findAll() {
+    public List<TenantResponse> findAll() {
         return tenantService.findAll();
     }
 }

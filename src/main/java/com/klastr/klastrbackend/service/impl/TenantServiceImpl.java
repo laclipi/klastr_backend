@@ -3,12 +3,14 @@ package com.klastr.klastrbackend.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.klastr.klastrbackend.domain.Tenant;
 import com.klastr.klastrbackend.dto.CreateTenantRequest;
+import com.klastr.klastrbackend.dto.TenantResponse;
 import com.klastr.klastrbackend.exception.BusinessException;
 import com.klastr.klastrbackend.exception.ResourceNotFoundException;
 import com.klastr.klastrbackend.repository.TenantRepository;
@@ -23,18 +25,19 @@ public class TenantServiceImpl implements TenantService {
         this.tenantRepository = tenantRepository;
     }
 
+    // 🔥 mapper privado (MUY PRO)
+    private TenantResponse mapToResponse(Tenant tenant) {
+        return new TenantResponse(
+                tenant.getId(),
+                tenant.getName(),
+                tenant.getStatus(),
+                tenant.getCreatedAt()
+        );
+    }
+
     @Override
-    public Tenant create(CreateTenantRequest request) {
+    public TenantResponse create(CreateTenantRequest request) {
 
-        // 🔥 VALIDACIÓN 1 — nombre vacío
-        if (request.getName() == null || request.getName().isBlank()) {
-            throw new BusinessException(
-                    "Tenant name cannot be empty",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
-        // 🔥 VALIDACIÓN 2 — duplicados
         if (tenantRepository.existsByName(request.getName())) {
             throw new BusinessException(
                     "Tenant with this name already exists",
@@ -48,20 +51,28 @@ public class TenantServiceImpl implements TenantService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return tenantRepository.save(tenant);
+        Tenant saved = tenantRepository.save(tenant);
+
+        return mapToResponse(saved);
     }
 
     @Override
-    public Tenant findById(UUID id) {
+    public TenantResponse findById(UUID id) {
 
-        return tenantRepository.findById(id)
+        Tenant tenant = tenantRepository.findById(id)
                 .orElseThrow(()
                         -> new ResourceNotFoundException("Tenant not found with id: " + id)
                 );
+
+        return mapToResponse(tenant);
     }
 
     @Override
-    public List<Tenant> findAll() {
-        return tenantRepository.findAll();
+    public List<TenantResponse> findAll() {
+
+        return tenantRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 }
