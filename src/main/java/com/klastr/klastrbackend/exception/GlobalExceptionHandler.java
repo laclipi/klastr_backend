@@ -5,9 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +19,7 @@ public class GlobalExceptionHandler {
     private static final Logger log
             = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // ✅ VALIDATION ERRORS → 400
+    // VALIDATION DTO (@Valid) → 400
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(
             MethodArgumentNotValidException ex,
@@ -26,14 +27,15 @@ public class GlobalExceptionHandler {
 
         Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors()
+        ex.getBindingResult()
+                .getFieldErrors()
                 .forEach(error
                         -> errors.put(error.getField(), error.getDefaultMessage())
                 );
 
         ApiError apiError = new ApiError(
                 HttpStatus.BAD_REQUEST.value(),
-                errors, //  SIN toString()
+                errors,
                 request.getRequestURI()
         );
 
@@ -42,14 +44,31 @@ public class GlobalExceptionHandler {
                 .body(apiError);
     }
 
-    // ✅ BUSINESS ERRORS (409, 422, etc)
+    // UUID mal formado → 400 (no más 500 )
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "Invalid ID format",
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    // BUSINESS ERRORS → 409, 422...
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiError> handleBusiness(
             BusinessException ex,
             HttpServletRequest request) {
 
         ApiError error = new ApiError(
-                ex.getStatus().value(), // 👈 MUY IMPORTANTE
+                ex.getStatus().value(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
@@ -59,7 +78,7 @@ public class GlobalExceptionHandler {
                 .body(error);
     }
 
-    // ✅ SYSTEM ERRORS → 500
+    //  SYSTEM ERRORS → 500 reales
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(
             Exception ex,

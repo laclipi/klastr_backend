@@ -94,7 +94,7 @@ public class TenantServiceImpl implements TenantService {
                 .collect(Collectors.toList());
     }
 
-    //  DELETE  ← ya que estamos, te lo dejo PRO
+    //  DELETE  
     @Override
     public void delete(UUID id) {
 
