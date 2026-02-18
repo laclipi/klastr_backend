@@ -1,6 +1,5 @@
 package com.klastr.klastrbackend.service.impl;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -13,6 +12,7 @@ import com.klastr.klastrbackend.dto.CreateTenantRequest;
 import com.klastr.klastrbackend.dto.TenantResponse;
 import com.klastr.klastrbackend.exception.BusinessException;
 import com.klastr.klastrbackend.exception.ResourceNotFoundException;
+import com.klastr.klastrbackend.mapper.TenantMapper;
 import com.klastr.klastrbackend.repository.TenantRepository;
 import com.klastr.klastrbackend.service.TenantService;
 
@@ -20,19 +20,13 @@ import com.klastr.klastrbackend.service.TenantService;
 public class TenantServiceImpl implements TenantService {
 
     private final TenantRepository tenantRepository;
+    private final TenantMapper tenantMapper;
 
-    public TenantServiceImpl(TenantRepository tenantRepository) {
+    // Constructor único — inyección limpia
+    public TenantServiceImpl(TenantRepository tenantRepository,
+            TenantMapper tenantMapper) {
         this.tenantRepository = tenantRepository;
-    }
-
-    // 🔥 mapper privado (MUY PRO)
-    private TenantResponse mapToResponse(Tenant tenant) {
-        return new TenantResponse(
-                tenant.getId(),
-                tenant.getName(),
-                tenant.getStatus(),
-                tenant.getCreatedAt()
-        );
+        this.tenantMapper = tenantMapper;
     }
 
     @Override
@@ -45,15 +39,13 @@ public class TenantServiceImpl implements TenantService {
             );
         }
 
-        Tenant tenant = Tenant.builder()
-                .name(request.getName())
-                .status("ACTIVE")
-                .createdAt(LocalDateTime.now())
-                .build();
+        // usamos mapper para crear entity
+        Tenant tenant = tenantMapper.toEntity(request);
 
         Tenant saved = tenantRepository.save(tenant);
 
-        return mapToResponse(saved);
+        // mapper también para response
+        return tenantMapper.toResponse(saved);
     }
 
     @Override
@@ -64,7 +56,7 @@ public class TenantServiceImpl implements TenantService {
                         -> new ResourceNotFoundException("Tenant not found with id: " + id)
                 );
 
-        return mapToResponse(tenant);
+        return tenantMapper.toResponse(tenant);
     }
 
     @Override
@@ -72,7 +64,7 @@ public class TenantServiceImpl implements TenantService {
 
         return tenantRepository.findAll()
                 .stream()
-                .map(this::mapToResponse)
+                .map(tenantMapper::toResponse)
                 .collect(Collectors.toList());
     }
 }
