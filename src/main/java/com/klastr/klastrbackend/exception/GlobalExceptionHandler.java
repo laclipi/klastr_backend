@@ -77,6 +77,23 @@ public class GlobalExceptionHandler {
                 .status(ex.getStatus())
                 .body(error);
     }
+    // NOT FOUND → 404
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(
+            ResourceNotFoundException ex,
+            HttpServletRequest request) {
+
+        ApiError error = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error);
+    }
 
     //  SYSTEM ERRORS → 500 reales
     @ExceptionHandler(Exception.class)
