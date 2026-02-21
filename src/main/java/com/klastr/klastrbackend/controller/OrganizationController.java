@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.klastr.klastrbackend.dto.CreateOrganizationRequest;
 import com.klastr.klastrbackend.dto.OrganizationResponse;
+import com.klastr.klastrbackend.dto.UpdateOrganizationRequest;
 import com.klastr.klastrbackend.service.OrganizationService;
 
 import jakarta.validation.Valid;
@@ -25,10 +26,9 @@ public class OrganizationController {
             @PathVariable UUID tenantId,
             @Valid @RequestBody CreateOrganizationRequest request) {
 
-        OrganizationResponse response
-                = organizationService.create(tenantId, request);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                organizationService.create(tenantId, request)
+        );
     }
 
     @GetMapping
@@ -36,5 +36,31 @@ public class OrganizationController {
             @PathVariable UUID tenantId) {
 
         return organizationService.findByTenant(tenantId);
+    }
+
+    @GetMapping("/{organizationId}")
+    public OrganizationResponse findById(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID organizationId) {
+
+        return organizationService.findById(tenantId, organizationId);
+    }
+
+    @PutMapping("/{organizationId}")
+    public OrganizationResponse update(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID organizationId,
+            @Valid @RequestBody UpdateOrganizationRequest request) {
+
+        return organizationService.update(tenantId, organizationId, request);
+    }
+
+    @DeleteMapping("/{organizationId}")
+    public ResponseEntity<Void> delete(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID organizationId) {
+
+        organizationService.delete(tenantId, organizationId);
+        return ResponseEntity.noContent().build();
     }
 }
