@@ -1,0 +1,373 @@
+{
+  "info": {
+    "_postman_id": "781d5561-c6ad-4b1a-b1a7-71bba1d5840c",
+    "name": "Klastr API - Local",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48939885",
+    "_collection_link": "https://go.postman.co/collection/48939885-781d5561-c6ad-4b1a-b1a7-71bba1d5840c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "tenants",
+      "item": [
+        {
+          "name": "CREATE Tenant",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Tenant Madrid\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/tenants",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "tenants"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tenant by id",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/tenants/fcd01b4f-0523-472c-a813-fdbe4bc45d2c",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "tenants",
+                "fcd01b4f-0523-472c-a813-fdbe4bc45d2c"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - All tenants",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/tenants",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "tenants"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UPDATE - Tenant",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Tenant Madrid Updated\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/tenants/fcd01b4f-0523-472c-a813-fdbe4bc45d2c",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "tenants",
+                "fcd01b4f-0523-472c-a813-fdbe4bc45d2c"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE - Tenant",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/tenants/fcd01b4f-0523-472c-a813-fdbe4bc45d2c",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "tenants",
+                "fcd01b4f-0523-472c-a813-fdbe4bc45d2c"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "\"PRUEBA_DUPLICADO_TEST\"",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"PRUEBA_DUPLICADO_TEST\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/tenants",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "tenants"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ID inválido (global handler)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/tenants/123",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "tenants",
+                "123"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "404 recurso inexistente",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/tenants/11111111-1111-1111-1111-111111111111",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "tenants",
+                "11111111-1111-1111-1111-111111111111"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "organizations",
+      "item": [
+        {
+          "name": "CREATE - Organization",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"CEAC Barcelona\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenants",
+                "{{tenantId}}",
+                "organizations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Organizations by Tenant",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenants",
+                "{{tenantId}}",
+                "organizations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Organizationd By Id",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/organizations/{{organizationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenants",
+                "{{tenantId}}",
+                "organizations",
+                "{{organizationId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UPDATE Organization",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"CEAC Barcelona Updated\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/organizations/{{organizationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenants",
+                "{{tenantId}}",
+                "organizations",
+                "{{organizationId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Organization",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/organizations/{{organizationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenants",
+                "{{tenantId}}",
+                "organizations",
+                "{{organizationId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
