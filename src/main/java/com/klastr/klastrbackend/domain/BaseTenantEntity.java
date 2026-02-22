@@ -1,9 +1,10 @@
 package com.klastr.klastrbackend.domain;
 
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +13,11 @@ import lombok.Setter;
 @Setter
 public abstract class BaseTenantEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "tenant_id",
+            nullable = false,
+            updatable = false
+    )
     private Tenant tenant;
 }

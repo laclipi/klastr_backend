@@ -12,4 +12,5 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
 
     boolean existsByName(String name);
 
+    boolean existsByNameAndIdNot(String name, UUID id);
 }

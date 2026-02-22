@@ -28,7 +28,6 @@ public class OrganizationServiceImpl implements OrganizationService {
     private final TenantRepository tenantRepository;
     private final OrganizationMapper organizationMapper;
 
-    // CREATE
     @Override
     public OrganizationResponse create(UUID tenantId, CreateOrganizationRequest request) {
 
@@ -47,19 +46,16 @@ public class OrganizationServiceImpl implements OrganizationService {
         Organization organization = organizationMapper.toEntity(request);
         organization.setTenant(tenant);
 
-        Organization saved = organizationRepository.save(organization);
-
-        return organizationMapper.toResponse(saved);
+        return organizationMapper.toResponse(
+                organizationRepository.save(organization)
+        );
     }
 
-    // GET ALL BY TENANT
     @Override
     public List<OrganizationResponse> findByTenant(UUID tenantId) {
 
         if (!tenantRepository.existsById(tenantId)) {
-            throw new ResourceNotFoundException(
-                    "Tenant not found with id: " + tenantId
-            );
+            throw new ResourceNotFoundException("Tenant not found with id: " + tenantId);
         }
 
         return organizationRepository.findByTenantIdWithTenant(tenantId)
@@ -68,41 +64,29 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .toList();
     }
 
-    // GET BY ID
     @Override
     public OrganizationResponse findById(UUID tenantId, UUID organizationId) {
 
-        Organization organization = organizationRepository.findById(organizationId)
+        Organization organization = organizationRepository
+                .findByIdAndTenantId(organizationId, tenantId)
                 .orElseThrow(()
-                        -> new ResourceNotFoundException("Organization not found with id: " + organizationId)
+                        -> new ResourceNotFoundException("Organization not found in tenant")
                 );
-
-        if (!organization.getTenant().getId().equals(tenantId)) {
-            throw new ResourceNotFoundException(
-                    "Organization does not belong to tenant: " + tenantId
-            );
-        }
 
         return organizationMapper.toResponse(organization);
     }
 
-    // UPDATE
     @Override
     public OrganizationResponse update(UUID tenantId, UUID organizationId, UpdateOrganizationRequest request) {
 
-        Organization organization = organizationRepository.findById(organizationId)
+        Organization organization = organizationRepository
+                .findByIdAndTenantId(organizationId, tenantId)
                 .orElseThrow(()
-                        -> new ResourceNotFoundException("Organization not found with id: " + organizationId)
+                        -> new ResourceNotFoundException("Organization not found in tenant")
                 );
 
-        if (!organization.getTenant().getId().equals(tenantId)) {
-            throw new ResourceNotFoundException(
-                    "Organization does not belong to tenant: " + tenantId
-            );
-        }
-
-        if (organizationRepository.existsByNameAndTenantId(request.getName(), tenantId)
-                && !organization.getName().equals(request.getName())) {
+        if (!organization.getName().equals(request.getName())
+                && organizationRepository.existsByNameAndTenantId(request.getName(), tenantId)) {
 
             throw new BusinessException(
                     "Organization already exists in this tenant",
@@ -112,25 +96,19 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         organization.setName(request.getName());
 
-        Organization updated = organizationRepository.save(organization);
-
-        return organizationMapper.toResponse(updated);
+        return organizationMapper.toResponse(
+                organizationRepository.save(organization)
+        );
     }
 
-    // DELETE
     @Override
     public void delete(UUID tenantId, UUID organizationId) {
 
-        Organization organization = organizationRepository.findById(organizationId)
+        Organization organization = organizationRepository
+                .findByIdAndTenantId(organizationId, tenantId)
                 .orElseThrow(()
-                        -> new ResourceNotFoundException("Organization not found with id: " + organizationId)
+                        -> new ResourceNotFoundException("Organization not found in tenant")
                 );
-
-        if (!organization.getTenant().getId().equals(tenantId)) {
-            throw new ResourceNotFoundException(
-                    "Organization does not belong to tenant: " + tenantId
-            );
-        }
 
         organizationRepository.delete(organization);
     }

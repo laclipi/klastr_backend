@@ -3,6 +3,7 @@ package com.klastr.klastrbackend.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,9 +27,11 @@ public class OrganizationController {
             @PathVariable UUID tenantId,
             @Valid @RequestBody CreateOrganizationRequest request) {
 
-        return ResponseEntity.ok(
-                organizationService.create(tenantId, request)
-        );
+        OrganizationResponse response = organizationService.create(tenantId, request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping

@@ -2,12 +2,12 @@ package com.klastr.klastrbackend.service.impl;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.klastr.klastrbackend.domain.Tenant;
+import com.klastr.klastrbackend.domain.TenantStatus;
 import com.klastr.klastrbackend.dto.CreateTenantRequest;
 import com.klastr.klastrbackend.dto.UpdateTenantRequest;
 import com.klastr.klastrbackend.dto.TenantResponse;
@@ -17,23 +17,21 @@ import com.klastr.klastrbackend.mapper.TenantMapper;
 import com.klastr.klastrbackend.repository.TenantRepository;
 import com.klastr.klastrbackend.service.TenantService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class TenantServiceImpl implements TenantService {
 
     private final TenantRepository tenantRepository;
     private final TenantMapper tenantMapper;
 
-    public TenantServiceImpl(TenantRepository tenantRepository,
-            TenantMapper tenantMapper) {
-        this.tenantRepository = tenantRepository;
-        this.tenantMapper = tenantMapper;
-    }
-
-    // CREATE
     @Override
     public TenantResponse create(CreateTenantRequest request) {
 
-        if (tenantRepository.existsByName(request.getName())) {
+        String normalizedName = request.getName().trim();
+
+        if (tenantRepository.existsByName(normalizedName)) {
             throw new BusinessException(
                     "Tenant with this name already exists",
                     HttpStatus.CONFLICT
@@ -41,12 +39,14 @@ public class TenantServiceImpl implements TenantService {
         }
 
         Tenant tenant = tenantMapper.toEntity(request);
-        Tenant saved = tenantRepository.save(tenant);
+        tenant.setName(normalizedName);
+        tenant.setStatus(TenantStatus.ACTIVE);
 
-        return tenantMapper.toResponse(saved);
+        return tenantMapper.toResponse(
+                tenantRepository.save(tenant)
+        );
     }
 
-    //  UPDATE
     @Override
     public TenantResponse update(UUID id, UpdateTenantRequest request) {
 
@@ -55,9 +55,10 @@ public class TenantServiceImpl implements TenantService {
                         -> new ResourceNotFoundException("Tenant not found with id: " + id)
                 );
 
-        // evitar duplicados
-        if (tenantRepository.existsByName(request.getName())
-                && !tenant.getName().equals(request.getName())) {
+        String normalizedName = request.getName().trim();
+
+        if (!tenant.getName().equals(normalizedName)
+                && tenantRepository.existsByName(normalizedName)) {
 
             throw new BusinessException(
                     "Tenant with this name already exists",
@@ -65,14 +66,13 @@ public class TenantServiceImpl implements TenantService {
             );
         }
 
-        tenant.setName(request.getName());
+        tenant.setName(normalizedName);
 
-        Tenant updated = tenantRepository.save(tenant);
-
-        return tenantMapper.toResponse(updated);
+        return tenantMapper.toResponse(
+                tenantRepository.save(tenant)
+        );
     }
 
-    //  FIND BY ID
     @Override
     public TenantResponse findById(UUID id) {
 
@@ -84,17 +84,15 @@ public class TenantServiceImpl implements TenantService {
         return tenantMapper.toResponse(tenant);
     }
 
-    // FIND ALL
     @Override
     public List<TenantResponse> findAll() {
 
         return tenantRepository.findAll()
                 .stream()
                 .map(tenantMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    //  DELETE  
     @Override
     public void delete(UUID id) {
 
@@ -103,6 +101,9 @@ public class TenantServiceImpl implements TenantService {
                         -> new ResourceNotFoundException("Tenant not found with id: " + id)
                 );
 
-        tenantRepository.delete(tenant);
+        // Soft delete recomendado en SaaS
+        tenant.setStatus(TenantStatus.SUSPENDED);
+
+        tenantRepository.save(tenant);
     }
 }

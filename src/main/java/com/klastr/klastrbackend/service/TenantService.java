@@ -17,5 +17,8 @@ public interface TenantService {
 
     List<TenantResponse> findAll();
 
+    /**
+     * Soft delete (recommended) or physical delete depending on business rule.
+     */
     void delete(UUID id);
 }
