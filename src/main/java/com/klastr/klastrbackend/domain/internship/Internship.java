@@ -5,22 +5,18 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.klastr.klastrbackend.domain.organization.Organization;
+import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.domain.tenant.BaseTenantEntity;
-import com.klastr.klastrbackend.domain.user.User;
 
 import jakarta.persistence.*;
-
 import lombok.*;
 
 @Entity
-@Table(
-        name = "internships",
-        indexes = {
-            @Index(name = "idx_internship_student", columnList = "student_id"),
-            @Index(name = "idx_internship_organization", columnList = "organization_id"),
-            @Index(name = "idx_internship_status", columnList = "status")
-        }
-)
+@Table(name = "internships", indexes = {
+        @Index(name = "idx_internship_student", columnList = "student_id"),
+        @Index(name = "idx_internship_organization", columnList = "organization_id"),
+        @Index(name = "idx_internship_status", columnList = "status")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -38,7 +34,7 @@ public class Internship extends BaseTenantEntity {
     // -------------------------------------------------
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id", nullable = false, updatable = false)
-    private User student;
+    private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "organization_id", nullable = false, updatable = false)
@@ -48,13 +44,13 @@ public class Internship extends BaseTenantEntity {
     // INFORMACIÓN ACADÉMICA
     // -------------------------------------------------
     @Column(nullable = false)
-    private Integer academicYear; // Ej: 2025
+    private Integer academicYear;
 
     @Column(nullable = false, length = 20)
-    private String academicPeriod; // Ej: "2024-2025"
+    private String academicPeriod;
 
     @Column(nullable = false)
-    private Integer requiredHours; // Ej: 400
+    private Integer requiredHours;
 
     // -------------------------------------------------
     // FECHAS

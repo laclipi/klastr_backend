@@ -7,23 +7,15 @@ import java.util.UUID;
 import com.klastr.klastrbackend.domain.user.User;
 
 import jakarta.persistence.*;
-
 import lombok.*;
 
 @Entity
-@Table(
-        name = "internship_attendance",
-        uniqueConstraints = {
-            @UniqueConstraint(
-                    name = "uk_attendance_internship_date",
-                    columnNames = {"internship_id", "date"}
-            )
-        },
-        indexes = {
-            @Index(name = "idx_attendance_internship", columnList = "internship_id"),
-            @Index(name = "idx_attendance_status", columnList = "status")
-        }
-)
+@Table(name = "internship_attendance", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_attendance_internship_date", columnNames = { "internship_id", "date" })
+}, indexes = {
+        @Index(name = "idx_attendance_internship", columnList = "internship_id"),
+        @Index(name = "idx_attendance_status", columnList = "status")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -42,6 +34,13 @@ public class InternshipAttendance {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "internship_id", nullable = false, updatable = false)
     private Internship internship;
+
+    // -------------------------------------------------
+    // RELACIÓN CON SEMANA
+    // -------------------------------------------------
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "week_id", nullable = false)
+    private InternshipAttendanceWeek week;
 
     // -------------------------------------------------
     // REGISTRO DIARIO

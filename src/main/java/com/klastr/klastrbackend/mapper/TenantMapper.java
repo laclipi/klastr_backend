@@ -1,10 +1,9 @@
 package com.klastr.klastrbackend.mapper;
 
-import java.time.LocalDateTime;
-
 import org.springframework.stereotype.Component;
 
 import com.klastr.klastrbackend.domain.tenant.Tenant;
+import com.klastr.klastrbackend.domain.tenant.TenantStatus;
 import com.klastr.klastrbackend.dto.CreateTenantRequest;
 import com.klastr.klastrbackend.dto.TenantResponse;
 
@@ -12,11 +11,9 @@ import com.klastr.klastrbackend.dto.TenantResponse;
 public class TenantMapper {
 
     public Tenant toEntity(CreateTenantRequest request) {
-
         return Tenant.builder()
                 .name(request.getName())
-                .status("ACTIVE")
-                .createdAt(LocalDateTime.now())
+                .status(TenantStatus.ACTIVE)
                 .build();
     }
 
@@ -24,8 +21,7 @@ public class TenantMapper {
         return new TenantResponse(
                 tenant.getId(),
                 tenant.getName(),
-                tenant.getStatus(),
-                tenant.getCreatedAt()
-        );
+                tenant.getStatus().name(),
+                tenant.getCreatedAt());
     }
 }
