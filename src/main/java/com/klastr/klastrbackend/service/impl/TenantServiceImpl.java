@@ -6,8 +6,8 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.klastr.klastrbackend.domain.Tenant;
-import com.klastr.klastrbackend.domain.TenantStatus;
+import com.klastr.klastrbackend.domain.tenant.Tenant;
+import com.klastr.klastrbackend.domain.tenant.TenantStatus;
 import com.klastr.klastrbackend.dto.CreateTenantRequest;
 import com.klastr.klastrbackend.dto.UpdateTenantRequest;
 import com.klastr.klastrbackend.dto.TenantResponse;

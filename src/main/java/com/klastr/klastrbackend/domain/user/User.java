@@ -1,7 +1,10 @@
-package com.klastr.klastrbackend.domain;
+package com.klastr.klastrbackend.domain.user;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.klastr.klastrbackend.domain.organization.Organization;
+import com.klastr.klastrbackend.domain.tenant.BaseTenantEntity;
 
 import jakarta.persistence.*;
 

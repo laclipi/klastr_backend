@@ -1,4 +1,4 @@
-package com.klastr.klastrbackend.domain;
+package com.klastr.klastrbackend.domain.tenant;
 
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;

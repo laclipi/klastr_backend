@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import com.klastr.klastrbackend.domain.Tenant;
+import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.CreateTenantRequest;
 import com.klastr.klastrbackend.dto.TenantResponse;
 

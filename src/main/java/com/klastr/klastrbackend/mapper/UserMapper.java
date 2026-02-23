@@ -2,10 +2,10 @@ package com.klastr.klastrbackend.mapper;
 
 import org.springframework.stereotype.Component;
 
-import com.klastr.klastrbackend.domain.Organization;
-import com.klastr.klastrbackend.domain.User;
-import com.klastr.klastrbackend.domain.UserRole;
-import com.klastr.klastrbackend.domain.UserStatus;
+import com.klastr.klastrbackend.domain.organization.Organization;
+import com.klastr.klastrbackend.domain.user.User;
+import com.klastr.klastrbackend.domain.user.UserRole;
+import com.klastr.klastrbackend.domain.user.UserStatus;
 import com.klastr.klastrbackend.dto.CreateUserRequest;
 import com.klastr.klastrbackend.dto.UpdateUserRequest;
 import com.klastr.klastrbackend.dto.UserResponse;

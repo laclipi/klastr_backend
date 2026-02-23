@@ -1,4 +1,4 @@
-package com.klastr.klastrbackend.domain;
+package com.klastr.klastrbackend.domain.user;
 
 public enum UserStatus {
 

@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
-import com.klastr.klastrbackend.domain.Organization;
+import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.dto.CreateOrganizationRequest;
 import com.klastr.klastrbackend.dto.OrganizationResponse;
 
