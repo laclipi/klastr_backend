@@ -2,7 +2,6 @@ package com.klastr.klastrbackend.domain.internship;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import com.klastr.klastrbackend.domain.base.BaseEntity;
 import com.klastr.klastrbackend.domain.student.Student;
@@ -21,26 +20,22 @@ import lombok.*;
 @Builder
 public class Internship extends BaseEntity {
 
-    @Id
-    @GeneratedValue
-    private UUID id;
-
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
 
     @Column(nullable = false)
     private Integer academicYear;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private String academicPeriod;
 
     @Column(nullable = false)
@@ -53,7 +48,7 @@ public class Internship extends BaseEntity {
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private InternshipStatus status;
 
     @Column(nullable = false, updatable = false)

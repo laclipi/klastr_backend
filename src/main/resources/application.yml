@@ -13,5 +13,10 @@ spring:
         format_sql: true
     open-in-view: false
 
+  security:
+    user:
+      name: admin
+      password: admin123
+
 server:
   port: 8080

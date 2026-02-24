@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class StudentServiceImpl implements StudentService {
 
         private final StudentRepository studentRepository;
@@ -30,6 +32,9 @@ public class StudentServiceImpl implements StudentService {
         private final OrganizationRepository organizationRepository;
         private final StudentMapper studentMapper;
 
+        // -------------------------------------------------
+        // CREATE
+        // -------------------------------------------------
         @Override
         public StudentResponse create(UUID tenantId, CreateStudentRequest request) {
 
@@ -53,17 +58,36 @@ public class StudentServiceImpl implements StudentService {
                 return studentMapper.toResponse(saved);
         }
 
+        // -------------------------------------------------
+        // FIND BY ID
+        // -------------------------------------------------
         @Override
+        @Transactional(readOnly = true)
         public StudentResponse findById(UUID tenantId, UUID studentId) {
 
-                Student student = studentRepository.findByIdAndTenantId(studentId, tenantId)
+                Student student = studentRepository.findById(studentId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+
+                if (!student.getTenant().getId().equals(tenantId)) {
+                        throw new ResourceNotFoundException("Student not found");
+                }
 
                 return studentMapper.toResponse(student);
         }
 
+        // -------------------------------------------------
+        // FIND BY ORGANIZATION
+        // -------------------------------------------------
         @Override
+        @Transactional(readOnly = true)
         public List<StudentResponse> findByOrganization(UUID tenantId, UUID organizationId) {
+
+                Organization organization = organizationRepository.findById(organizationId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+
+                if (!organization.getTenant().getId().equals(tenantId)) {
+                        throw new ResourceNotFoundException("Organization not found");
+                }
 
                 return studentRepository.findByOrganizationId(organizationId)
                                 .stream()
