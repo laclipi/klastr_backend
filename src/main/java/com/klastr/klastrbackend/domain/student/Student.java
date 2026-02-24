@@ -1,11 +1,8 @@
 package com.klastr.klastrbackend.domain.student;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
+import com.klastr.klastrbackend.domain.base.BaseEntity;
+import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.domain.organization.Organization;
-import com.klastr.klastrbackend.domain.tenant.BaseTenantEntity;
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,30 +13,22 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Student extends BaseTenantEntity {
+public class Student extends BaseEntity {
 
-    @Id
-    @GeneratedValue
-    private UUID id;
-
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false)
     private String firstName;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "organization_id", nullable = false)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
+
+    @ManyToOne
+    @JoinColumn(name = "organization_id")
     private Organization organization;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
 }

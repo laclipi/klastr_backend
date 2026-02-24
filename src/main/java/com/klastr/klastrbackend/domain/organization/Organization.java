@@ -1,44 +1,23 @@
 package com.klastr.klastrbackend.domain.organization;
 
-import java.util.UUID;
-
-import com.klastr.klastrbackend.domain.tenant.BaseTenantEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.klastr.klastrbackend.domain.base.BaseEntity;
+import com.klastr.klastrbackend.domain.tenant.Tenant;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Table(
-        name = "organizations",
-        uniqueConstraints = {
-            @UniqueConstraint(
-                    name = "uk_organization_tenant_name",
-                    columnNames = {"tenant_id", "name"}
-            )
-        }
-)
+@Table(name = "organizations")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Organization extends BaseTenantEntity {
-
-    @Id
-    @GeneratedValue
-    @Column(nullable = false, updatable = false)
-    private UUID id;
+public class Organization extends BaseEntity {
 
     @Column(nullable = false)
     private String name;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 }

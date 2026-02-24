@@ -1,22 +1,8 @@
 package com.klastr.klastrbackend.domain.tenant;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.klastr.klastrbackend.domain.base.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "tenants")
@@ -25,25 +11,25 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Tenant {
-
-    @Id
-    @GeneratedValue
-    @Column(nullable = false, updatable = false)
-    private UUID id;
+public class Tenant extends BaseEntity {
 
     @Column(nullable = false, unique = true)
     private String name;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private TenantStatus status;
+
+    @Column(nullable = false, updatable = false)
+    private java.time.LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = java.time.LocalDateTime.now();
+        }
+        if (this.status == null) {
+            this.status = TenantStatus.ACTIVE;
+        }
     }
 }

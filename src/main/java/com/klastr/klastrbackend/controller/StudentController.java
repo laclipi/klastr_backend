@@ -11,14 +11,17 @@ import com.klastr.klastrbackend.dto.StudentResponse;
 import com.klastr.klastrbackend.service.StudentService;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/tenants/{tenantId}/students")
-@RequiredArgsConstructor
 public class StudentController {
 
     private final StudentService studentService;
+
+    // ✅ Constructor manual (elimina el error)
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
+    }
 
     // CREATE
     @PostMapping
@@ -27,8 +30,7 @@ public class StudentController {
             @Valid @RequestBody CreateStudentRequest request) {
 
         return ResponseEntity.ok(
-                studentService.create(tenantId, request)
-        );
+                studentService.create(tenantId, request));
     }
 
     // FIND BY ID

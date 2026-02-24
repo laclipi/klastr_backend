@@ -1,66 +1,60 @@
 package com.klastr.klastrbackend.domain.user;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
+import com.klastr.klastrbackend.domain.base.BaseEntity;
+import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.domain.organization.Organization;
-import com.klastr.klastrbackend.domain.tenant.BaseTenantEntity;
-
+import com.klastr.klastrbackend.domain.user.UserRole;
+import com.klastr.klastrbackend.domain.user.UserStatus;
 import jakarta.persistence.*;
-
 import lombok.*;
 
 @Entity
-@Table(
-        name = "users",
-        uniqueConstraints = {
-            @UniqueConstraint(
-                    name = "uk_user_tenant_email",
-                    columnNames = {"tenant_id", "email"}
-            )
-        }
-)
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User extends BaseTenantEntity {
+public class User extends BaseEntity {
 
-    @Id
-    @GeneratedValue
-    @Column(nullable = false, updatable = false)
-    private UUID id;
-
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false)
     private String firstName;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private UserRole role;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private UserStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "organization_id", nullable = false, updatable = false)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
+
+    @ManyToOne
+    @JoinColumn(name = "organization_id")
     private Organization organization;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(nullable = false, updatable = false)
+    private java.time.LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = java.time.LocalDateTime.now();
+        }
+        if (this.status == null) {
+            this.status = UserStatus.ACTIVE;
+        }
     }
 }
