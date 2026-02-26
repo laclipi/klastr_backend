@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.v.AgreementStatus;
-import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.InternshipAgreement;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.agreement.InternshipAgreement;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.AgreementResponse;
 import com.klastr.klastrbackend.dto.internship.CreateAgreementRequest;

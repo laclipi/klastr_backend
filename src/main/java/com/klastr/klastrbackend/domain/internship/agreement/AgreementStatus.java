@@ -1,4 +1,4 @@
-package com.klastr.klastrbackend.domain.internship;
+package com.klastr.klastrbackend.domain.internship.agreement;
 
 public enum AgreementStatus {
 

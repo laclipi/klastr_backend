@@ -1,4 +1,4 @@
-package com.klastr.klastrbackend.domain.internship;
+package com.klastr.klastrbackend.domain.internship.agreement;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

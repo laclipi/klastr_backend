@@ -3,7 +3,7 @@ package com.klastr.klastrbackend.dto.internship;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.klastr.klastrbackend.domain.internship.AgreementStatus;
+import com.klastr.klastrbackend.domain.internship.agreement.AgreementStatus;
 
 public class AgreementResponse {
 
