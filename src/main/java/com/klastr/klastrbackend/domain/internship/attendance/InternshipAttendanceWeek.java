@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.klastr.klastrbackend.domain.internship.StudentInternship;
+import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
 import com.klastr.klastrbackend.domain.user.User;
 
 import jakarta.persistence.Entity;

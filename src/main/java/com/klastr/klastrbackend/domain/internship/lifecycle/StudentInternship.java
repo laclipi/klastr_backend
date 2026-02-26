@@ -1,4 +1,4 @@
-package com.klastr.klastrbackend.domain.internship;
+package com.klastr.klastrbackend.domain.internship.lifecycle;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import com.klastr.klastrbackend.domain.base.BaseEntity;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
-import com.klastr.klastrbackend.domain.internship.StudentInternshipStatus;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 
 import jakarta.persistence.Column;
@@ -25,7 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "internships") // Se mantiene el nombre actual para no romper el esquema existente
+@Table(name = "internships") // Se mantiene para no romper esquema existente
 @Getter
 @Setter
 @NoArgsConstructor
@@ -41,12 +40,11 @@ public class StudentInternship extends BaseEntity {
     private Student student;
 
     /**
-     * Empresa donde el alumno realiza la FCT.
-     * En Fase 2 se vinculará mediante InternshipAgreement.
+     * Organización donde se realiza la FCT.
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "organization_id", nullable = false)
-    private Organization company;
+    private Organization organization;
 
     /**
      * Tenant al que pertenece la FCT.
@@ -79,6 +77,52 @@ public class StudentInternship extends BaseEntity {
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // ==========================================
+    // LIFECYCLE MANAGEMENT
+    // ==========================================
+
+    public void approve() {
+        requireStatus(StudentInternshipStatus.DRAFT);
+        this.status = StudentInternshipStatus.APPROVED;
+    }
+
+    public void reject() {
+        requireStatus(StudentInternshipStatus.DRAFT);
+        this.status = StudentInternshipStatus.REJECTED;
+    }
+
+    public void activate() {
+        requireStatus(StudentInternshipStatus.APPROVED);
+        this.status = StudentInternshipStatus.ACTIVE;
+    }
+
+    public void complete() {
+        requireStatus(StudentInternshipStatus.ACTIVE);
+        this.status = StudentInternshipStatus.COMPLETED;
+    }
+
+    public void cancel() {
+        if (this.status == StudentInternshipStatus.COMPLETED) {
+            throw new IllegalStateException(
+                    "Completed internships cannot be cancelled");
+        }
+        this.status = StudentInternshipStatus.CANCELLED;
+    }
+
+    private void requireStatus(StudentInternshipStatus expected) {
+        if (this.status != expected) {
+            throw new IllegalStateException(
+                    "Invalid state transition. Expected: "
+                            + expected
+                            + ", but was: "
+                            + this.status);
+        }
+    }
+
+    // ==========================================
+    // PERSISTENCE HOOK
+    // ==========================================
 
     @PrePersist
     protected void onCreate() {

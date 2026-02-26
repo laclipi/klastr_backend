@@ -1,8 +1,9 @@
 package com.klastr.klastrbackend.domain.internship.evaluation;
 
-import com.klastr.klastrbackend.domain.internship.StudentInternship;
 import com.klastr.klastrbackend.domain.user.User;
 import com.klastr.klastrbackend.domain.base.BaseEntity;
+import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
+
 import jakarta.persistence.*;
 import lombok.*;
 

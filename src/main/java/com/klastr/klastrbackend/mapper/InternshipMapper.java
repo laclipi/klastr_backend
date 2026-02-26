@@ -2,9 +2,9 @@ package com.klastr.klastrbackend.mapper;
 
 import org.springframework.stereotype.Component;
 
+import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
-import com.klastr.klastrbackend.domain.internship.StudentInternship;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.StudentInternshipResponse;
 

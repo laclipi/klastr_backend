@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
-import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternshipStatus;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.InternshipResponse;
@@ -61,8 +60,7 @@ public class InternshipServiceImpl implements InternshipService {
                 .requiredHours(request.getRequiredHours())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
-                .status(StudentInternshipStatus.DRAFT)
-                .build();
+                .build(); // status lo gestiona @PrePersist
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -92,7 +90,7 @@ public class InternshipServiceImpl implements InternshipService {
     }
 
     // -------------------------------------------------
-    // STATE FLOW
+    // STATE FLOW (delegado al dominio)
     // -------------------------------------------------
 
     @Override
@@ -100,11 +98,7 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() != StudentInternshipStatus.DRAFT) {
-            throw new RuntimeException("Only DRAFT internships can be approved");
-        }
-
-        internship.setStatus(StudentInternshipStatus.APPROVED);
+        internship.approve();
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -114,11 +108,7 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() != StudentInternshipStatus.DRAFT) {
-            throw new RuntimeException("Only DRAFT internships can be rejected");
-        }
-
-        internship.setStatus(StudentInternshipStatus.REJECTED);
+        internship.reject();
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -128,11 +118,7 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() != StudentInternshipStatus.APPROVED) {
-            throw new RuntimeException("Only APPROVED internships can be activated");
-        }
-
-        internship.setStatus(StudentInternshipStatus.ACTIVE);
+        internship.activate();
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -142,11 +128,7 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() == StudentInternshipStatus.COMPLETED) {
-            throw new RuntimeException("Completed internships cannot be cancelled");
-        }
-
-        internship.setStatus(StudentInternshipStatus.CANCELLED);
+        internship.cancel();
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -156,11 +138,7 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() != StudentInternshipStatus.ACTIVE) {
-            throw new RuntimeException("Only ACTIVE internships can be completed");
-        }
-
-        internship.setStatus(StudentInternshipStatus.COMPLETED);
+        internship.complete();
 
         return mapToResponse(internshipRepository.save(internship));
     }
