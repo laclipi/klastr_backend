@@ -1,9 +1,10 @@
-package com.klastr.klastrbackend.domain.internship;
+package com.klastr.klastrbackend.domain.internship.attendance;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.klastr.klastrbackend.domain.internship.StudentInternship;
 import com.klastr.klastrbackend.domain.user.User;
 
 import jakarta.persistence.*;

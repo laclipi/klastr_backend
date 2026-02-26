@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.AttendanceStatus;
-import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.InternshipAttendance;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendance;
 
 public interface InternshipAttendanceRepository
                 extends JpaRepository<InternshipAttendance, UUID> {
