@@ -11,12 +11,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "internship_attendance", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_attendance_internship_date", columnNames = { "internship_id", "date" })
-}, indexes = {
-        @Index(name = "idx_attendance_internship", columnList = "internship_id"),
-        @Index(name = "idx_attendance_status", columnList = "status")
-})
+@Table(name = "internship_attendances", uniqueConstraints = @UniqueConstraint(columnNames = { "internship_id",
+        "date" }))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,35 +25,20 @@ public class InternshipAttendance {
     @Column(nullable = false, updatable = false)
     private UUID id;
 
-    // -------------------------------------------------
-    // RELACIÓN PRINCIPAL
-    // -------------------------------------------------
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "internship_id", nullable = false, updatable = false)
+    @JoinColumn(name = "internship_id", nullable = false)
     private StudentInternship internship;
 
-    // -------------------------------------------------
-    // RELACIÓN CON SEMANA
-    // -------------------------------------------------
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "week_id", nullable = false)
     private InternshipAttendanceWeek week;
 
-    // -------------------------------------------------
-    // REGISTRO DIARIO
-    // -------------------------------------------------
     @Column(nullable = false)
     private LocalDate date;
 
     @Column(nullable = false)
     private Double hoursWorked;
 
-    @Column(length = 1000)
-    private String notes;
-
-    // -------------------------------------------------
-    // VALIDACIÓN
-    // -------------------------------------------------
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private AttendanceStatus status;
@@ -68,15 +49,41 @@ public class InternshipAttendance {
 
     private LocalDateTime validatedAt;
 
-    // -------------------------------------------------
-    // METADATA
-    // -------------------------------------------------
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // -------------------------------------------------
+    // ==========================================
     // LIFECYCLE
-    // -------------------------------------------------
+    // ==========================================
+
+    public void approve(User validator) {
+        requireStatus(AttendanceStatus.PENDING);
+        this.status = AttendanceStatus.APPROVED;
+        this.validatedBy = validator;
+        this.validatedAt = LocalDateTime.now();
+    }
+
+    public void reject(User validator) {
+        requireStatus(AttendanceStatus.PENDING);
+        this.status = AttendanceStatus.REJECTED;
+        this.validatedBy = validator;
+        this.validatedAt = LocalDateTime.now();
+    }
+
+    private void requireStatus(AttendanceStatus expected) {
+        if (this.status != expected) {
+            throw new IllegalStateException(
+                    "Invalid state transition. Expected: "
+                            + expected
+                            + ", but was: "
+                            + this.status);
+        }
+    }
+
+    // ==========================================
+    // PERSISTENCE
+    // ==========================================
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -85,21 +92,8 @@ public class InternshipAttendance {
             this.status = AttendanceStatus.PENDING;
         }
 
-        validateHours();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        validateHours();
-    }
-
-    private void validateHours() {
-        if (hoursWorked == null || hoursWorked <= 0) {
-            throw new IllegalStateException("Hours worked must be greater than zero");
-        }
-
-        if (hoursWorked > 24) {
-            throw new IllegalStateException("Hours worked cannot exceed 24 per day");
+        if (this.hoursWorked == null || this.hoursWorked <= 0) {
+            throw new IllegalStateException("Hours worked must be greater than 0");
         }
     }
 }

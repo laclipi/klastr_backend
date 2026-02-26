@@ -7,22 +7,8 @@ import java.util.UUID;
 import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
 import com.klastr.klastrbackend.domain.user.User;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Column;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
-
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "internship_attendance_weeks")
@@ -49,7 +35,7 @@ public class InternshipAttendanceWeek {
     private LocalDate weekEnd;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private WeekStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -57,4 +43,53 @@ public class InternshipAttendanceWeek {
     private User validatedBy;
 
     private LocalDateTime validatedAt;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // ==========================================
+    // LIFECYCLE
+    // ==========================================
+
+    public void submit() {
+        requireStatus(WeekStatus.OPEN);
+        this.status = WeekStatus.SUBMITTED;
+    }
+
+    public void approve(User validator) {
+        requireStatus(WeekStatus.SUBMITTED);
+        this.status = WeekStatus.APPROVED;
+        this.validatedBy = validator;
+        this.validatedAt = LocalDateTime.now();
+    }
+
+    public void reject(User validator) {
+        requireStatus(WeekStatus.SUBMITTED);
+        this.status = WeekStatus.REJECTED;
+        this.validatedBy = validator;
+        this.validatedAt = LocalDateTime.now();
+    }
+
+    private void requireStatus(WeekStatus expected) {
+        if (this.status != expected) {
+            throw new IllegalStateException(
+                    "Invalid state transition. Expected: "
+                            + expected
+                            + ", but was: "
+                            + this.status);
+        }
+    }
+
+    // ==========================================
+    // PERSISTENCE
+    // ==========================================
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+
+        if (this.status == null) {
+            this.status = WeekStatus.OPEN;
+        }
+    }
 }
