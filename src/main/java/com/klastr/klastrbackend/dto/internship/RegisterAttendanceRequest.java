@@ -1,28 +1,20 @@
 package com.klastr.klastrbackend.dto.internship;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Max;
 
 public class RegisterAttendanceRequest {
-
-    @NotNull
-    private UUID internshipId;
 
     @NotNull
     private LocalDate date;
 
     @NotNull
+    @Positive(message = "Hours must be greater than 0")
+    @Max(value = 12, message = "Hours cannot exceed 12 per day")
     private Integer hours;
-
-    public UUID getInternshipId() {
-        return internshipId;
-    }
-
-    public void setInternshipId(UUID internshipId) {
-        this.internshipId = internshipId;
-    }
 
     public LocalDate getDate() {
         return date;

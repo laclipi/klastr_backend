@@ -1,7 +1,6 @@
 package com.klastr.klastrbackend.service.impl;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -26,6 +25,7 @@ import com.klastr.klastrbackend.repository.OrganizationRepository;
 import com.klastr.klastrbackend.repository.StudentRepository;
 import com.klastr.klastrbackend.repository.TenantRepository;
 import com.klastr.klastrbackend.service.InternshipService;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -73,6 +73,26 @@ public class InternshipServiceImpl implements InternshipService {
         return mapToResponse(internshipRepository.save(internship));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<InternshipResponse> findByStudent(UUID tenantId, UUID studentId) {
+
+        return internshipRepository
+                .findByTenant_IdAndStudent_Id(tenantId, studentId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InternshipResponse findById(UUID tenantId, UUID internshipId) {
+
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        return mapToResponse(internship);
+    }
+
     // -------------------------------------------------
     // COMPLETE WITH HOURS VALIDATION
     // -------------------------------------------------
@@ -98,6 +118,50 @@ public class InternshipServiceImpl implements InternshipService {
         }
 
         internship.complete();
+
+        return mapToResponse(internshipRepository.save(internship));
+    }
+
+    // activate
+    @Override
+    public InternshipResponse activate(UUID tenantId, UUID internshipId) {
+
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        internship.activate();
+
+        return mapToResponse(internshipRepository.save(internship));
+    }
+
+    // response
+    @Override
+    public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {
+
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        internship.reject();
+
+        return mapToResponse(internshipRepository.save(internship));
+    }
+
+    // approve
+    @Override
+    public InternshipResponse approve(UUID tenantId, UUID internshipId) {
+
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        internship.approve();
+
+        return mapToResponse(internshipRepository.save(internship));
+    }
+
+    // cancel
+    @Override
+    public InternshipResponse cancel(UUID tenantId, UUID internshipId, String reason) {
+
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        internship.cancel();
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -139,11 +203,80 @@ public class InternshipServiceImpl implements InternshipService {
                 .internship(internship)
                 .week(week)
                 .date(request.getDate())
-                .hoursWorked(request.getHoursWorked())
+                .hoursWorked(request.getHours().doubleValue())
                 .status(AttendanceStatus.PENDING)
                 .build();
 
         attendanceRepository.save(attendance);
+    }
+
+    @Override
+    public void rejectWeek(UUID tenantId, UUID internshipId, UUID weekId, String reason) {
+
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        InternshipAttendanceWeek week = weekRepository.findById(weekId)
+                .orElseThrow(() -> new RuntimeException("Week not found"));
+
+        if (!week.getInternship().getId().equals(internshipId)) {
+            throw new IllegalStateException("Week does not belong to internship");
+        }
+
+        week.reject(null);
+
+        weekRepository.save(week);
+    }
+
+    @Override
+    public void submitWeek(UUID tenantId, UUID internshipId, UUID weekId) {
+
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        InternshipAttendanceWeek week = weekRepository.findById(weekId)
+                .orElseThrow(() -> new RuntimeException("Week not found"));
+
+        if (!week.getInternship().getId().equals(internshipId)) {
+            throw new IllegalStateException("Week does not belong to internship");
+        }
+
+        long attendanceCount = attendanceRepository.countByWeek_Id(weekId);
+
+        if (attendanceCount == 0) {
+            throw new IllegalStateException("Cannot submit an empty week");
+        }
+
+        week.submit();
+
+        weekRepository.save(week);
+    }
+
+    @Override
+    public void approveWeek(UUID tenantId, UUID internshipId, UUID weekId) {
+
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        InternshipAttendanceWeek week = weekRepository.findById(weekId)
+                .orElseThrow(() -> new RuntimeException("Week not found"));
+
+        if (!week.getInternship().getId().equals(internshipId)) {
+            throw new IllegalStateException("Week does not belong to internship");
+        }
+
+        week.approve(null); // más adelante puedes pasar usuario autenticado
+
+        weekRepository.save(week);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Double calculateApprovedHours(UUID tenantId, UUID internshipId) {
+
+        getInternshipOrThrow(internshipId, tenantId);
+
+        Double approvedHours = attendanceRepository
+                .sumApprovedHours(internshipId, AttendanceStatus.APPROVED);
+
+        return approvedHours != null ? approvedHours : 0.0;
     }
 
     // -------------------------------------------------
