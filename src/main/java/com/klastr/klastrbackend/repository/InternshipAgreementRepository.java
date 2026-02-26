@@ -1,13 +1,13 @@
 package com.klastr.klastrbackend.repository;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.agreement.AgreementStatuss;
-import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.agreement.InternshipAgreement;
+import com.klastr.klastrbackend.domain.internship.agreement.InternshipAgreement;
+import com.klastr.klastrbackend.domain.internship.agreement.AgreementStatus;
 
 public interface InternshipAgreementRepository
                 extends JpaRepository<InternshipAgreement, UUID> {

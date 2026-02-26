@@ -10,13 +10,13 @@ import lombok.RequiredArgsConstructor;
 
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
-import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.Internship;
-import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.InternshipStatus;
+import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
+import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternshipStatus;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.InternshipResponse;
 import com.klastr.klastrbackend.dto.internship.RegisterAttendanceRequest;
-import com.klastr.klastrbackend.repository.InternshipRepository;
+import com.klastr.klastrbackend.repository.StudentInternshipRepository;
 import com.klastr.klastrbackend.repository.OrganizationRepository;
 import com.klastr.klastrbackend.repository.StudentRepository;
 import com.klastr.klastrbackend.repository.TenantRepository;
@@ -27,7 +27,7 @@ import com.klastr.klastrbackend.service.InternshipService;
 @Transactional
 public class InternshipServiceImpl implements InternshipService {
 
-    private final InternshipRepository internshipRepository;
+    private final StudentInternshipRepository internshipRepository;
     private final StudentRepository studentRepository;
     private final OrganizationRepository organizationRepository;
     private final TenantRepository tenantRepository;
@@ -35,6 +35,7 @@ public class InternshipServiceImpl implements InternshipService {
     // -------------------------------------------------
     // CREATE
     // -------------------------------------------------
+
     @Override
     public InternshipResponse create(UUID tenantId, CreateInternshipRequest request) {
 
@@ -60,7 +61,7 @@ public class InternshipServiceImpl implements InternshipService {
                 .requiredHours(request.getRequiredHours())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
-                .status(InternshipStatus.PENDING)
+                .status(StudentInternshipStatus.DRAFT)
                 .build();
 
         return mapToResponse(internshipRepository.save(internship));
@@ -69,14 +70,12 @@ public class InternshipServiceImpl implements InternshipService {
     // -------------------------------------------------
     // FIND
     // -------------------------------------------------
+
     @Override
     @Transactional(readOnly = true)
     public InternshipResponse findById(UUID tenantId, UUID internshipId) {
 
-        StudentInternship internship = internshipRepository.findById(internshipId)
-                .orElseThrow(() -> new RuntimeException("Internship not found"));
-
-        validateTenant(internship, tenantId);
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
         return mapToResponse(internship);
     }
@@ -101,11 +100,11 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() != InternshipStatus.PENDING) {
-            throw new RuntimeException("Only PENDING internships can be approved");
+        if (internship.getStatus() != StudentInternshipStatus.DRAFT) {
+            throw new RuntimeException("Only DRAFT internships can be approved");
         }
 
-        internship.setStatus(InternshipStatus.APPROVED);
+        internship.setStatus(StudentInternshipStatus.APPROVED);
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -115,11 +114,11 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() != InternshipStatus.PENDING) {
-            throw new RuntimeException("Only PENDING internships can be rejected");
+        if (internship.getStatus() != StudentInternshipStatus.DRAFT) {
+            throw new RuntimeException("Only DRAFT internships can be rejected");
         }
 
-        internship.setStatus(InternshipStatus.REJECTED);
+        internship.setStatus(StudentInternshipStatus.REJECTED);
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -129,11 +128,11 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() != InternshipStatus.APPROVED) {
+        if (internship.getStatus() != StudentInternshipStatus.APPROVED) {
             throw new RuntimeException("Only APPROVED internships can be activated");
         }
 
-        internship.setStatus(InternshipStatus.ACTIVE);
+        internship.setStatus(StudentInternshipStatus.ACTIVE);
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -143,11 +142,11 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() == InternshipStatus.COMPLETED) {
+        if (internship.getStatus() == StudentInternshipStatus.COMPLETED) {
             throw new RuntimeException("Completed internships cannot be cancelled");
         }
 
-        internship.setStatus(InternshipStatus.CANCELLED);
+        internship.setStatus(StudentInternshipStatus.CANCELLED);
 
         return mapToResponse(internshipRepository.save(internship));
     }
@@ -157,11 +156,11 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        if (internship.getStatus() != InternshipStatus.ACTIVE) {
+        if (internship.getStatus() != StudentInternshipStatus.ACTIVE) {
             throw new RuntimeException("Only ACTIVE internships can be completed");
         }
 
-        internship.setStatus(InternshipStatus.COMPLETED);
+        internship.setStatus(StudentInternshipStatus.COMPLETED);
 
         return mapToResponse(internshipRepository.save(internship));
     }
