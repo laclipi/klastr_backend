@@ -140,6 +140,24 @@ public class InternshipServiceImpl implements InternshipService {
     public InternshipResponse complete(UUID tenantId, UUID internshipId) {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
+
+        Double approvedHours = attendanceRepository
+                .sumApprovedHours(
+                        internshipId,
+                        com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus.APPROVED);
+
+        if (approvedHours == null) {
+            approvedHours = 0.0;
+        }
+
+        if (approvedHours < internship.getRequiredHours()) {
+            throw new IllegalStateException(
+                    "Cannot complete internship. Approved hours: "
+                            + approvedHours
+                            + " / Required: "
+                            + internship.getRequiredHours());
+        }
+
         internship.complete();
 
         return mapToResponse(internshipRepository.save(internship));
@@ -154,15 +172,23 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
+        // 1️⃣ Internship debe estar ACTIVE
         if (!internship.getStatus().isActive()) {
             throw new IllegalStateException("Attendance can only be registered for ACTIVE internships");
         }
 
+        // 2️⃣ Fecha dentro del rango de la internship
         if (request.getDate().isBefore(internship.getStartDate())
                 || request.getDate().isAfter(internship.getEndDate())) {
             throw new IllegalStateException("Date outside internship range");
         }
 
+        // 3️⃣ 🚫 Evitar duplicado mismo día (AQUÍ VA)
+        if (attendanceRepository.existsByInternship_IdAndDate(internshipId, request.getDate())) {
+            throw new IllegalStateException("Attendance already registered for this date");
+        }
+
+        // 4️⃣ Buscar semana existente o crearla
         InternshipAttendanceWeek week = weekRepository
                 .findByInternship_IdAndWeekStartLessThanEqualAndWeekEndGreaterThanEqual(
                         internshipId,
@@ -170,10 +196,12 @@ public class InternshipServiceImpl implements InternshipService {
                         request.getDate())
                 .orElseGet(() -> createWeek(internship, request.getDate()));
 
+        // 5️⃣ La semana debe estar OPEN
         if (!week.getStatus().isOpen()) {
             throw new IllegalStateException("Cannot register attendance in a closed week");
         }
 
+        // 6️⃣ Crear asistencia diaria
         InternshipAttendance attendance = InternshipAttendance.builder()
                 .internship(internship)
                 .week(week)
@@ -182,6 +210,28 @@ public class InternshipServiceImpl implements InternshipService {
                 .build();
 
         attendanceRepository.save(attendance);
+    }
+
+    InternshipAttendanceWeek week = weekRepository
+                .findByInternship_IdAndWeekStartLessThanEqualAndWeekEndGreaterThanEqual(
+                        internshipId,
+                        request.getDate(),
+                        request.getDate())
+                .orElseGet(() -> createWeek(internship, request.getDate()));
+
+    if(!week.getStatus().isOpen())
+    {
+        throw new IllegalStateException("Cannot register attendance in a closed week");
+    }
+
+    InternshipAttendance attendance = InternshipAttendance.builder()
+            .internship(internship)
+            .week(week)
+            .date(request.getDate())
+            .hoursWorked(request.getHoursWorked())
+            .build();
+
+    attendanceRepository.save(attendance);
     }
 
     @Override

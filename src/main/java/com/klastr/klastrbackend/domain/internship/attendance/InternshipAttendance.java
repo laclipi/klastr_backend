@@ -85,15 +85,14 @@ public class InternshipAttendance {
     // ==========================================
 
     @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+    protected void validateHours() {
 
-        if (this.status == null) {
-            this.status = AttendanceStatus.PENDING;
+        if (hoursWorked == null || hoursWorked <= 0) {
+            throw new IllegalStateException("Hours must be greater than 0");
         }
 
-        if (this.hoursWorked == null || this.hoursWorked <= 0) {
-            throw new IllegalStateException("Hours worked must be greater than 0");
+        if (hoursWorked > 8) {
+            throw new IllegalStateException("Cannot register more than 8 hours per day");
         }
     }
 }
