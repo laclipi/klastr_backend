@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
+import com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus;
 import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendance;
 import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendanceWeek;
 import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
@@ -73,68 +74,8 @@ public class InternshipServiceImpl implements InternshipService {
     }
 
     // -------------------------------------------------
-    // FIND
+    // COMPLETE WITH HOURS VALIDATION
     // -------------------------------------------------
-
-    @Override
-    @Transactional(readOnly = true)
-    public InternshipResponse findById(UUID tenantId, UUID internshipId) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-
-        return mapToResponse(internship);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<InternshipResponse> findByStudent(UUID tenantId, UUID studentId) {
-
-        return internshipRepository
-                .findByTenant_IdAndStudent_Id(tenantId, studentId)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    // -------------------------------------------------
-    // STATE FLOW (delegado al dominio)
-    // -------------------------------------------------
-
-    @Override
-    public InternshipResponse approve(UUID tenantId, UUID internshipId) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.approve();
-
-        return mapToResponse(internshipRepository.save(internship));
-    }
-
-    @Override
-    public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.reject();
-
-        return mapToResponse(internshipRepository.save(internship));
-    }
-
-    @Override
-    public InternshipResponse activate(UUID tenantId, UUID internshipId) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.activate();
-
-        return mapToResponse(internshipRepository.save(internship));
-    }
-
-    @Override
-    public InternshipResponse cancel(UUID tenantId, UUID internshipId, String reason) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.cancel();
-
-        return mapToResponse(internshipRepository.save(internship));
-    }
 
     @Override
     public InternshipResponse complete(UUID tenantId, UUID internshipId) {
@@ -142,9 +83,7 @@ public class InternshipServiceImpl implements InternshipService {
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
         Double approvedHours = attendanceRepository
-                .sumApprovedHours(
-                        internshipId,
-                        com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus.APPROVED);
+                .sumApprovedHours(internshipId, AttendanceStatus.APPROVED);
 
         if (approvedHours == null) {
             approvedHours = 0.0;
@@ -164,7 +103,7 @@ public class InternshipServiceImpl implements InternshipService {
     }
 
     // -------------------------------------------------
-    // ATTENDANCE (PHASE 2)
+    // ATTENDANCE
     // -------------------------------------------------
 
     @Override
@@ -172,23 +111,19 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        // 1️⃣ Internship debe estar ACTIVE
         if (!internship.getStatus().isActive()) {
             throw new IllegalStateException("Attendance can only be registered for ACTIVE internships");
         }
 
-        // 2️⃣ Fecha dentro del rango de la internship
         if (request.getDate().isBefore(internship.getStartDate())
                 || request.getDate().isAfter(internship.getEndDate())) {
             throw new IllegalStateException("Date outside internship range");
         }
 
-        // 3️⃣ 🚫 Evitar duplicado mismo día (AQUÍ VA)
         if (attendanceRepository.existsByInternship_IdAndDate(internshipId, request.getDate())) {
             throw new IllegalStateException("Attendance already registered for this date");
         }
 
-        // 4️⃣ Buscar semana existente o crearla
         InternshipAttendanceWeek week = weekRepository
                 .findByInternship_IdAndWeekStartLessThanEqualAndWeekEndGreaterThanEqual(
                         internshipId,
@@ -196,119 +131,23 @@ public class InternshipServiceImpl implements InternshipService {
                         request.getDate())
                 .orElseGet(() -> createWeek(internship, request.getDate()));
 
-        // 5️⃣ La semana debe estar OPEN
         if (!week.getStatus().isOpen()) {
             throw new IllegalStateException("Cannot register attendance in a closed week");
         }
 
-        // 6️⃣ Crear asistencia diaria
         InternshipAttendance attendance = InternshipAttendance.builder()
                 .internship(internship)
                 .week(week)
                 .date(request.getDate())
                 .hoursWorked(request.getHoursWorked())
+                .status(AttendanceStatus.PENDING)
                 .build();
 
         attendanceRepository.save(attendance);
     }
 
-    InternshipAttendanceWeek week = weekRepository
-                .findByInternship_IdAndWeekStartLessThanEqualAndWeekEndGreaterThanEqual(
-                        internshipId,
-                        request.getDate(),
-                        request.getDate())
-                .orElseGet(() -> createWeek(internship, request.getDate()));
-
-    if(!week.getStatus().isOpen())
-    {
-        throw new IllegalStateException("Cannot register attendance in a closed week");
-    }
-
-    InternshipAttendance attendance = InternshipAttendance.builder()
-            .internship(internship)
-            .week(week)
-            .date(request.getDate())
-            .hoursWorked(request.getHoursWorked())
-            .build();
-
-    attendanceRepository.save(attendance);
-    }
-
-    @Override
-    public void submitWeek(UUID tenantId, UUID internshipId, UUID weekId) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-
-        if (!internship.getStatus().isActive()) {
-            throw new IllegalStateException("Only ACTIVE internships can submit weeks");
-        }
-
-        InternshipAttendanceWeek week = weekRepository.findById(weekId)
-                .orElseThrow(() -> new RuntimeException("Week not found"));
-
-        if (!week.getInternship().getId().equals(internshipId)) {
-            throw new IllegalStateException("Week does not belong to internship");
-        }
-
-        long attendanceCount = attendanceRepository.countByWeek_Id(weekId);
-        if (attendanceCount == 0) {
-            throw new IllegalStateException("Cannot submit an empty week");
-        }
-
-        week.submit();
-
-        weekRepository.save(week);
-    }
-
-    @Override
-    public void approveWeek(UUID tenantId, UUID internshipId, UUID weekId) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-
-        InternshipAttendanceWeek week = weekRepository.findById(weekId)
-                .orElseThrow(() -> new RuntimeException("Week not found"));
-
-        if (!week.getInternship().getId().equals(internshipId)) {
-            throw new IllegalStateException("Week does not belong to internship");
-        }
-
-        week.approve(null); // Si más adelante tienes usuario autenticado, aquí se pasa
-
-        weekRepository.save(week);
-    }
-
-    @Override
-    public void rejectWeek(UUID tenantId, UUID internshipId, UUID weekId, String reason) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-
-        InternshipAttendanceWeek week = weekRepository.findById(weekId)
-                .orElseThrow(() -> new RuntimeException("Week not found"));
-
-        if (!week.getInternship().getId().equals(internshipId)) {
-            throw new IllegalStateException("Week does not belong to internship");
-        }
-
-        week.reject(null);
-
-        weekRepository.save(week);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Double calculateApprovedHours(UUID tenantId, UUID internshipId) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-
-        Double approvedHours = attendanceRepository
-                .sumApprovedHours(internshipId,
-                        com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus.APPROVED);
-
-        return approvedHours != null ? approvedHours : 0.0;
-    }
-
     // -------------------------------------------------
-    // INTERNAL HELPERS
+    // HELPERS
     // -------------------------------------------------
 
     private StudentInternship getInternshipOrThrow(UUID internshipId, UUID tenantId) {
@@ -341,10 +180,6 @@ public class InternshipServiceImpl implements InternshipService {
 
         return weekRepository.save(week);
     }
-
-    // -------------------------------------------------
-    // MAPPER
-    // -------------------------------------------------
 
     private InternshipResponse mapToResponse(StudentInternship internship) {
 
