@@ -33,7 +33,7 @@ public class InternshipAttendance {
     // -------------------------------------------------
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "internship_id", nullable = false, updatable = false)
-    private Internship internship;
+    private StudentInternship internship;
 
     // -------------------------------------------------
     // RELACIÓN CON SEMANA

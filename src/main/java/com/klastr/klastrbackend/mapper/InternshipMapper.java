@@ -2,21 +2,21 @@ package com.klastr.klastrbackend.mapper;
 
 import org.springframework.stereotype.Component;
 
-import com.klastr.klastrbackend.domain.internship.Internship;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.Internship;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.InternshipResponse;
 
 @Component
 public class InternshipMapper {
 
-    public Internship toEntity(
+    public StudentInternship toEntity(
             CreateInternshipRequest request,
             Student student,
             Organization organization) {
 
-        return Internship.builder()
+        return StudentInternship.builder()
                 .student(student)
                 .organization(organization)
                 .academicYear(request.getAcademicYear())
@@ -27,7 +27,7 @@ public class InternshipMapper {
                 .build();
     }
 
-    public InternshipResponse toResponse(Internship internship) {
+    public InternshipResponse toResponse(StudentInternship internship) {
 
         return InternshipResponse.builder()
                 .id(internship.getId())

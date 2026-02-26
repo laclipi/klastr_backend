@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.klastr.klastrbackend.domain.internship.InternshipAttendanceWeek;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.InternshipAttendanceWeek;
 
 public interface InternshipAttendanceWeekRepository
                 extends JpaRepository<InternshipAttendanceWeek, UUID> {

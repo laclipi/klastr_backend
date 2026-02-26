@@ -2,10 +2,10 @@ package com.klastr.klastrbackend.mapper;
 
 import org.springframework.stereotype.Component;
 
-import com.klastr.klastrbackend.domain.internship.InternshipAgreement;
 import com.klastr.klastrbackend.dto.internship.CreateAgreementRequest;
 import com.klastr.klastrbackend.dto.internship.AgreementResponse;
-import com.klastr.klastrbackend.domain.organization.Organization;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internshipomain.organization.Organization;
+import com.klastr.klastrbackend..InternshipAgreement;
 
 @Component
 public class AgreementMapper {

@@ -6,8 +6,8 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.klastr.klastrbackend.domain.internship.InternshipAgreement;
-import com.klastr.klastrbackend.domain.internship.AgreementStatus;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.AgreementStatus;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.InternshipAgreement;
 
 public interface InternshipAgreementRepository
                 extends JpaRepository<InternshipAgreement, UUID> {

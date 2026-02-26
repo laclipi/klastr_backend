@@ -8,10 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
-import com.klastr.klastrbackend.domain.internship.Internship;
-import com.klastr.klastrbackend.domain.internship.InternshipStatus;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.Internship;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.InternshipStatus;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.InternshipResponse;
@@ -51,7 +51,7 @@ public class InternshipServiceImpl implements InternshipService {
             throw new RuntimeException("Organization does not belong to tenant");
         }
 
-        Internship internship = Internship.builder()
+        StudentInternship internship = StudentInternship.builder()
                 .tenant(tenant)
                 .student(student)
                 .organization(organization)
@@ -73,7 +73,7 @@ public class InternshipServiceImpl implements InternshipService {
     @Transactional(readOnly = true)
     public InternshipResponse findById(UUID tenantId, UUID internshipId) {
 
-        Internship internship = internshipRepository.findById(internshipId)
+        StudentInternship internship = internshipRepository.findById(internshipId)
                 .orElseThrow(() -> new RuntimeException("Internship not found"));
 
         validateTenant(internship, tenantId);
@@ -99,7 +99,7 @@ public class InternshipServiceImpl implements InternshipService {
     @Override
     public InternshipResponse approve(UUID tenantId, UUID internshipId) {
 
-        Internship internship = getInternshipOrThrow(internshipId, tenantId);
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
         if (internship.getStatus() != InternshipStatus.PENDING) {
             throw new RuntimeException("Only PENDING internships can be approved");
@@ -113,7 +113,7 @@ public class InternshipServiceImpl implements InternshipService {
     @Override
     public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {
 
-        Internship internship = getInternshipOrThrow(internshipId, tenantId);
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
         if (internship.getStatus() != InternshipStatus.PENDING) {
             throw new RuntimeException("Only PENDING internships can be rejected");
@@ -127,7 +127,7 @@ public class InternshipServiceImpl implements InternshipService {
     @Override
     public InternshipResponse activate(UUID tenantId, UUID internshipId) {
 
-        Internship internship = getInternshipOrThrow(internshipId, tenantId);
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
         if (internship.getStatus() != InternshipStatus.APPROVED) {
             throw new RuntimeException("Only APPROVED internships can be activated");
@@ -141,7 +141,7 @@ public class InternshipServiceImpl implements InternshipService {
     @Override
     public InternshipResponse cancel(UUID tenantId, UUID internshipId, String reason) {
 
-        Internship internship = getInternshipOrThrow(internshipId, tenantId);
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
         if (internship.getStatus() == InternshipStatus.COMPLETED) {
             throw new RuntimeException("Completed internships cannot be cancelled");
@@ -155,7 +155,7 @@ public class InternshipServiceImpl implements InternshipService {
     @Override
     public InternshipResponse complete(UUID tenantId, UUID internshipId) {
 
-        Internship internship = getInternshipOrThrow(internshipId, tenantId);
+        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
         if (internship.getStatus() != InternshipStatus.ACTIVE) {
             throw new RuntimeException("Only ACTIVE internships can be completed");
@@ -199,9 +199,9 @@ public class InternshipServiceImpl implements InternshipService {
     // INTERNAL HELPERS
     // -------------------------------------------------
 
-    private Internship getInternshipOrThrow(UUID internshipId, UUID tenantId) {
+    private StudentInternship getInternshipOrThrow(UUID internshipId, UUID tenantId) {
 
-        Internship internship = internshipRepository.findById(internshipId)
+        StudentInternship internship = internshipRepository.findById(internshipId)
                 .orElseThrow(() -> new RuntimeException("Internship not found"));
 
         validateTenant(internship, tenantId);
@@ -209,7 +209,7 @@ public class InternshipServiceImpl implements InternshipService {
         return internship;
     }
 
-    private void validateTenant(Internship internship, UUID tenantId) {
+    private void validateTenant(StudentInternship internship, UUID tenantId) {
 
         if (!internship.getTenant().getId().equals(tenantId)) {
             throw new RuntimeException("Internship does not belong to tenant");
@@ -220,7 +220,7 @@ public class InternshipServiceImpl implements InternshipService {
     // MAPPER
     // -------------------------------------------------
 
-    private InternshipResponse mapToResponse(Internship internship) {
+    private InternshipResponse mapToResponse(StudentInternship internship) {
 
         return InternshipResponse.builder()
                 .id(internship.getId())

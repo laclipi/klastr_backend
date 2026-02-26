@@ -3,7 +3,7 @@ package com.klastr.klastrbackend.dto.internship;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import com.klastr.klastrbackend.domain.internship.InternshipStatus;
+import com.klastr.klastrbackend.domain.internship.StudentInternshipStatus;
 
 public class StudentInternshipResponse {
 
@@ -18,7 +18,7 @@ public class StudentInternshipResponse {
     private Integer requiredHours;
     private Integer approvedHours;
 
-    private InternshipStatus status;
+    private StudentInternshipStatus status;
 
     public UUID getId() {
         return id;
@@ -84,11 +84,11 @@ public class StudentInternshipResponse {
         this.approvedHours = approvedHours;
     }
 
-    public InternshipStatus getStatus() {
+    public StudentInternshipStatus getStatus() {
         return status;
     }
 
-    public void setStatus(InternshipStatus status) {
+    public void setStatus(StudentInternshipStatus status) {
         this.status = status;
     }
 }

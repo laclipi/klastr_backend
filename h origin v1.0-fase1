@@ -1,0 +1,665 @@
+[33mtag v1.0-fase1[m
+Tagger: laclipi <clipilaura@gmail.com>
+Date:   Tue Feb 24 17:14:53 2026 +0100
+
+Cierre oficial Fase 1 - módulo Internship estable
+
+[33mcommit 9edf572c8ec1afa971cb9ce405650aa94caa6ca7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv1.0-fase1[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: laclipi <clipilaura@gmail.com>
+Date:   Tue Feb 24 17:02:36 2026 +0100
+
+    feat: cierra Fase 1 - implementación completa del módulo Internship
+
+[1mdiff --git a/pom.xml b/pom.xml[m
+[1mindex 1b2db8a..101b963 100644[m
+[1m--- a/pom.xml[m
+[1m+++ b/pom.xml[m
+[36m@@ -57,7 +57,7 @@[m
+             <artifactId>spring-boot-starter-validation</artifactId>[m
+         </dependency>[m
+ [m
+[31m-        <!-- LOMBOK ✅ CORRECTO -->[m
+[32m+[m[32m        <!-- LOMBOK -->[m
+         <dependency>[m
+             <groupId>org.projectlombok</groupId>[m
+             <artifactId>lombok</artifactId>[m
+[36m@@ -96,6 +96,9 @@[m
+             <plugin>[m
+                 <groupId>org.springframework.boot</groupId>[m
+                 <artifactId>spring-boot-maven-plugin</artifactId>[m
+[32m+[m[32m                <configuration>[m
+[32m+[m[32m                    <mainClass>com.klastr.klastrbackend.KlastrBackendApplication</mainClass>[m
+[32m+[m[32m                </configuration>[m
+             </plugin>[m
+ [m
+         </plugins>[m
+[1mdiff --git a/src/main/java/com/klastr/klastrbackend/controller/InternshipController.java b/src/main/java/com/klastr/klastrbackend/controller/InternshipController.java[m
+[1mindex e6c444a..9c20f24 100644[m
+[1m--- a/src/main/java/com/klastr/klastrbackend/controller/InternshipController.java[m
+[1m+++ b/src/main/java/com/klastr/klastrbackend/controller/InternshipController.java[m
+[36m@@ -8,6 +8,7 @@[m [mimport jakarta.validation.Valid;[m
+ import org.springframework.http.ResponseEntity;[m
+ import org.springframework.web.bind.annotation.*;[m
+ [m
+[32m+[m[32mimport java.util.List;[m
+ import java.util.UUID;[m
+ [m
+ @RestController[m
+[36m@@ -20,6 +21,9 @@[m [mpublic class InternshipController {[m
+         this.internshipService = internshipService;[m
+     }[m
+ [m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // CREATE[m
+[32m+[m[32m    // -------------------------------------------------[m
+     @PostMapping[m
+     public ResponseEntity<InternshipResponse> create([m
+             @PathVariable UUID tenantId,[m
+[36m@@ -28,4 +32,88 @@[m [mpublic class InternshipController {[m
+         return ResponseEntity.ok([m
+                 internshipService.create(tenantId, request));[m
+     }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // FIND BY ID[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    @GetMapping("/{internshipId}")[m
+[32m+[m[32m    public ResponseEntity<InternshipResponse> findById([m
+[32m+[m[32m            @PathVariable UUID tenantId,[m
+[32m+[m[32m            @PathVariable UUID internshipId) {[m
+[32m+[m
+[32m+[m[32m        return ResponseEntity.ok([m
+[32m+[m[32m                internshipService.findById(tenantId, internshipId));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // FIND BY STUDENT[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    @GetMapping("/student/{studentId}")[m
+[32m+[m[32m    public ResponseEntity<List<InternshipResponse>> findByStudent([m
+[32m+[m[32m            @PathVariable UUID tenantId,[m
+[32m+[m[32m            @PathVariable UUID studentId) {[m
+[32m+[m
+[32m+[m[32m        return ResponseEntity.ok([m
+[32m+[m[32m                internshipService.findByStudent(tenantId, studentId));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // APPROVE[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    @PostMapping("/{internshipId}/approve")[m
+[32m+[m[32m    public ResponseEntity<InternshipResponse> approve([m
+[32m+[m[32m            @PathVariable UUID tenantId,[m
+[32m+[m[32m            @PathVariable UUID internshipId) {[m
+[32m+[m
+[32m+[m[32m        return ResponseEntity.ok([m
+[32m+[m[32m                internshipService.approve(tenantId, internshipId));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // REJECT[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    @PostMapping("/{internshipId}/reject")[m
+[32m+[m[32m    public ResponseEntity<InternshipResponse> reject([m
+[32m+[m[32m            @PathVariable UUID tenantId,[m
+[32m+[m[32m            @PathVariable UUID internshipId) {[m
+[32m+[m
+[32m+[m[32m        return ResponseEntity.ok([m
+[32m+[m[32m                internshipService.reject(tenantId, internshipId, null));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // ACTIVATE[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    @PostMapping("/{internshipId}/activate")[m
+[32m+[m[32m    public ResponseEntity<InternshipResponse> activate([m
+[32m+[m[32m            @PathVariable UUID tenantId,[m
+[32m+[m[32m            @PathVariable UUID internshipId) {[m
+[32m+[m
+[32m+[m[32m        return ResponseEntity.ok([m
+[32m+[m[32m                internshipService.activate(tenantId, internshipId));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // CANCEL[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    @PostMapping("/{internshipId}/cancel")[m
+[32m+[m[32m    public ResponseEntity<InternshipResponse> cancel([m
+[32m+[m[32m            @PathVariable UUID tenantId,[m
+[32m+[m[32m            @PathVariable UUID internshipId) {[m
+[32m+[m
+[32m+[m[32m        return ResponseEntity.ok([m
+[32m+[m[32m                internshipService.cancel(tenantId, internshipId, null));[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // COMPLETE[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    @PostMapping("/{internshipId}/complete")[m
+[32m+[m[32m    public ResponseEntity<InternshipResponse> complete([m
+[32m+[m[32m            @PathVariable UUID tenantId,[m
+[32m+[m[32m            @PathVariable UUID internshipId) {[m
+[32m+[m
+[32m+[m[32m        return ResponseEntity.ok([m
+[32m+[m[32m                internshipService.complete(tenantId, internshipId));[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/java/com/klastr/klastrbackend/domain/internship/Internship.java b/src/main/java/com/klastr/klastrbackend/domain/internship/Internship.java[m
+[1mindex a5ae7ac..a4cb1ab 100644[m
+[1m--- a/src/main/java/com/klastr/klastrbackend/domain/internship/Internship.java[m
+[1m+++ b/src/main/java/com/klastr/klastrbackend/domain/internship/Internship.java[m
+[36m@@ -2,7 +2,6 @@[m [mpackage com.klastr.klastrbackend.domain.internship;[m
+ [m
+ import java.time.LocalDate;[m
+ import java.time.LocalDateTime;[m
+[31m-import java.util.UUID;[m
+ [m
+ import com.klastr.klastrbackend.domain.base.BaseEntity;[m
+ import com.klastr.klastrbackend.domain.student.Student;[m
+[36m@@ -21,26 +20,22 @@[m [mimport lombok.*;[m
+ @Builder[m
+ public class Internship extends BaseEntity {[m
+ [m
+[31m-    @Id[m
+[31m-    @GeneratedValue[m
+[31m-    private UUID id;[m
+[31m-[m
+[31m-    @ManyToOne(optional = false)[m
+[32m+[m[32m    @ManyToOne(optional = false, fetch = FetchType.LAZY)[m
+     @JoinColumn(name = "student_id", nullable = false)[m
+     private Student student;[m
+ [m
+[31m-    @ManyToOne(optional = false)[m
+[32m+[m[32m    @ManyToOne(optional = false, fetch = FetchType.LAZY)[m
+     @JoinColumn(name = "organization_id", nullable = false)[m
+     private Organization organization;[m
+ [m
+[31m-    @ManyToOne(optional = false)[m
+[32m+[m[32m    @ManyToOne(optional = false, fetch = FetchType.LAZY)[m
+     @JoinColumn(name = "tenant_id", nullable = false)[m
+     private Tenant tenant;[m
+ [m
+     @Column(nullable = false)[m
+     private Integer academicYear;[m
+ [m
+[31m-    @Column(nullable = false)[m
+[32m+[m[32m    @Column(nullable = false, length = 20)[m
+     private String academicPeriod;[m
+ [m
+     @Column(nullable = false)[m
+[36m@@ -53,7 +48,7 @@[m [mpublic class Internship extends BaseEntity {[m
+     private LocalDate endDate;[m
+ [m
+     @Enumerated(EnumType.STRING)[m
+[31m-    @Column(nullable = false)[m
+[32m+[m[32m    @Column(nullable = false, length = 30)[m
+     private InternshipStatus status;[m
+ [m
+     @Column(nullable = false, updatable = false)[m
+[1mdiff --git a/src/main/java/com/klastr/klastrbackend/service/InternshipService.java b/src/main/java/com/klastr/klastrbackend/service/InternshipService.java[m
+[1mindex b8cb065..1eb9b33 100644[m
+[1m--- a/src/main/java/com/klastr/klastrbackend/service/InternshipService.java[m
+[1m+++ b/src/main/java/com/klastr/klastrbackend/service/InternshipService.java[m
+[36m@@ -9,74 +9,33 @@[m [mimport com.klastr.klastrbackend.dto.internship.RegisterAttendanceRequest;[m
+ [m
+ public interface InternshipService {[m
+ [m
+[31m-        // -------------------------------------------------[m
+         // CREATE[m
+[31m-        // -------------------------------------------------[m
+[31m-        InternshipResponse create([m
+[31m-                        UUID tenantId,[m
+[31m-                        CreateInternshipRequest request);[m
+[32m+[m[32m        InternshipResponse create(UUID tenantId, CreateInternshipRequest request);[m
+ [m
+[31m-        // -------------------------------------------------[m
+         // FIND[m
+[31m-        // -------------------------------------------------[m
+[31m-        InternshipResponse findById([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId);[m
+[32m+[m[32m        InternshipResponse findById(UUID tenantId, UUID internshipId);[m
+ [m
+[31m-        List<InternshipResponse> findByStudent([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID studentId);[m
+[32m+[m[32m        List<InternshipResponse> findByStudent(UUID tenantId, UUID studentId);[m
+ [m
+[31m-        // -------------------------------------------------[m
+         // STATE FLOW[m
+[31m-        // -------------------------------------------------[m
+[31m-        InternshipResponse approve([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId);[m
+[31m-[m
+[31m-        InternshipResponse reject([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId,[m
+[31m-                        String reason);[m
+[31m-[m
+[31m-        InternshipResponse activate([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId);[m
+[31m-[m
+[31m-        InternshipResponse cancel([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId,[m
+[31m-                        String reason);[m
+[31m-[m
+[31m-        InternshipResponse complete([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId);[m
+[31m-[m
+[31m-        // -------------------------------------------------[m
+[32m+[m[32m        InternshipResponse approve(UUID tenantId, UUID internshipId);[m
+[32m+[m
+[32m+[m[32m        InternshipResponse reject(UUID tenantId, UUID internshipId, String reason);[m
+[32m+[m
+[32m+[m[32m        InternshipResponse activate(UUID tenantId, UUID internshipId);[m
+[32m+[m
+[32m+[m[32m        InternshipResponse cancel(UUID tenantId, UUID internshipId, String reason);[m
+[32m+[m
+[32m+[m[32m        InternshipResponse complete(UUID tenantId, UUID internshipId);[m
+[32m+[m
+         // ATTENDANCE[m
+[31m-        // -------------------------------------------------[m
+[31m-        void registerAttendance([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId,[m
+[31m-                        RegisterAttendanceRequest request);[m
+[31m-[m
+[31m-        void submitWeek([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId,[m
+[31m-                        UUID weekId);[m
+[31m-[m
+[31m-        void approveWeek([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId,[m
+[31m-                        UUID weekId);[m
+[31m-[m
+[31m-        void rejectWeek([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId,[m
+[31m-                        UUID weekId,[m
+[31m-                        String reason);[m
+[31m-[m
+[31m-        Double calculateApprovedHours([m
+[31m-                        UUID tenantId,[m
+[31m-                        UUID internshipId);[m
+[32m+[m[32m        void registerAttendance(UUID tenantId, UUID internshipId, RegisterAttendanceRequest request);[m
+[32m+[m
+[32m+[m[32m        void submitWeek(UUID tenantId, UUID internshipId, UUID weekId);[m
+[32m+[m
+[32m+[m[32m        void approveWeek(UUID tenantId, UUID internshipId, UUID weekId);[m
+[32m+[m
+[32m+[m[32m        void rejectWeek(UUID tenantId, UUID internshipId, UUID weekId, String reason);[m
+[32m+[m
+[32m+[m[32m        Double calculateApprovedHours(UUID tenantId, UUID internshipId);[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/java/com/klastr/klastrbackend/service/impl/InternshipServiceImpl.java b/src/main/java/com/klastr/klastrbackend/service/impl/InternshipServiceImpl.java[m
+[1mindex 7bae00d..f4b0102 100644[m
+[1m--- a/src/main/java/com/klastr/klastrbackend/service/impl/InternshipServiceImpl.java[m
+[1m+++ b/src/main/java/com/klastr/klastrbackend/service/impl/InternshipServiceImpl.java[m
+[36m@@ -1,106 +1,237 @@[m
+ package com.klastr.klastrbackend.service.impl;[m
+ [m
+[32m+[m[32mimport java.util.List;[m
+[32m+[m[32mimport java.util.UUID;[m
+[32m+[m
+[32m+[m[32mimport org.springframework.stereotype.Service;[m
+[32m+[m[32mimport org.springframework.transaction.annotation.Transactional;[m
+[32m+[m
+[32m+[m[32mimport lombok.RequiredArgsConstructor;[m
+[32m+[m
+[32m+[m[32mimport com.klastr.klastrbackend.domain.internship.Internship;[m
+[32m+[m[32mimport com.klastr.klastrbackend.domain.internship.InternshipStatus;[m
+[32m+[m[32mimport com.klastr.klastrbackend.domain.organization.Organization;[m
+[32m+[m[32mimport com.klastr.klastrbackend.domain.student.Student;[m
+[32m+[m[32mimport com.klastr.klastrbackend.domain.tenant.Tenant;[m
+ import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;[m
+ import com.klastr.klastrbackend.dto.internship.InternshipResponse;[m
+ import com.klastr.klastrbackend.dto.internship.RegisterAttendanceRequest;[m
+[32m+[m[32mimport com.klastr.klastrbackend.repository.InternshipRepository;[m
+[32m+[m[32mimport com.klastr.klastrbackend.repository.OrganizationRepository;[m
+[32m+[m[32mimport com.klastr.klastrbackend.repository.StudentRepository;[m
+[32m+[m[32mimport com.klastr.klastrbackend.repository.TenantRepository;[m
+ import com.klastr.klastrbackend.service.InternshipService;[m
+ [m
+[31m-import org.springframework.stereotype.Service;[m
+[31m-[m
+[31m-import java.util.List;[m
+[31m-import java.util.UUID;[m
+[31m-[m
+ @Service[m
+[32m+[m[32m@RequiredArgsConstructor[m
+[32m+[m[32m@Transactional[m
+ public class InternshipServiceImpl implements InternshipService {[m
+ [m
+[32m+[m[32m    private final InternshipRepository internshipRepository;[m
+[32m+[m[32m    private final StudentRepository studentRepository;[m
+[32m+[m[32m    private final OrganizationRepository organizationRepository;[m
+[32m+[m[32m    private final TenantRepository tenantRepository;[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // CREATE[m
+[32m+[m[32m    // -------------------------------------------------[m
+     @Override[m
+     public InternshipResponse create(UUID tenantId, CreateInternshipRequest request) {[m
+ [m
+[31m-        return InternshipResponse.builder()[m
+[31m-                .id(UUID.randomUUID())[m
+[31m-                .studentId(request.getStudentId())[m
+[31m-                .organizationId(request.getOrganizationId())[m
+[32m+[m[32m        Tenant tenant = tenantRepository.findById(tenantId)[m
+[32m+[m[32m                .orElseThrow(() -> new RuntimeException("Tenant not found"));[m
+[32m+[m
+[32m+[m[32m        Student student = studentRepository.findById(request.getStudentId())[m
+[32m+[m[32m                .orElseThrow(() -> new RuntimeException("Student not found"));[m
+[32m+[m
+[32m+[m[32m        Organization organization = organizationRepository.findById(request.getOrganizationId())[m
+[32m+[m[32m                .orElseThrow(() -> new RuntimeException("Organization not found"));[m
+[32m+[m
+[32m+[m[32m        if (!organization.getTenant().getId().equals(tenantId)) {[m
+[32m+[m[32m            throw new RuntimeException("Organization does not belong to tenant");[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        Internship internship = Internship.builder()[m
+[32m+[m[32m                .tenant(tenant)[m
+[32m+[m[32m                .student(student)[m
+[32m+[m[32m                .organization(organization)[m
+                 .academicYear(request.getAcademicYear())[m
+                 .academicPeriod(request.getAcademicPeriod())[m
+                 .requiredHours(request.getRequiredHours())[m
+                 .startDate(request.getStartDate())[m
+                 .endDate(request.getEndDate())[m
+[31m-                .status("DRAFT")[m
+[32m+[m[32m                .status(InternshipStatus.PENDING)[m
+                 .build();[m
+[32m+[m
+[32m+[m[32m        return mapToResponse(internshipRepository.save(internship));[m
+     }[m
+ [m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // FIND[m
+[32m+[m[32m    // -------------------------------------------------[m
+     @Override[m
+[32m+[m[32m    @Transactional(readOnly = true)[m
+     public InternshipResponse findById(UUID tenantId, UUID internshipId) {[m
+ [m
+[31m-        return InternshipResponse.builder()[m
+[31m-                .id(internshipId)[m
+[31m-                .status("DRAFT")[m
+[31m-                .build();[m
+[32m+[m[32m        Internship internship = internshipRepository.findById(internshipId)[m
+[32m+[m[32m                .orElseThrow(() -> new RuntimeException("Internship not found"));[m
+[32m+[m
+[32m+[m[32m        validateTenant(internship, tenantId);[m
+[32m+[m
+[32m+[m[32m        return mapToResponse(internship);[m
+     }[m
+ [m
+     @Override[m
+[32m+[m[32m    @Transactional(readOnly = true)[m
+     public List<InternshipResponse> findByStudent(UUID tenantId, UUID studentId) {[m
+[31m-        return List.of();[m
+[32m+[m
+[32m+[m[32m        return internshipRepository[m
+[32m+[m[32m                .findByTenant_IdAndStudent_Id(tenantId, studentId)[m
+[32m+[m[32m                .stream()[m
+[32m+[m[32m                .map(this::mapToResponse)[m
+[32m+[m[32m                .toList();[m
+     }[m
+ [m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // STATE FLOW[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m
+     @Override[m
+     public InternshipResponse approve(UUID tenantId, UUID internshipId) {[m
+[31m-        return InternshipResponse.builder()[m
+[31m-                .id(internshipId)[m
+[31m-                .status("APPROVED")[m
+[31m-                .build();[m
+[32m+[m
+[32m+[m[32m        Internship internship = getInternshipOrThrow(internshipId, tenantId);[m
+[32m+[m
+[32m+[m[32m        if (internship.getStatus() != InternshipStatus.PENDING) {[m
+[32m+[m[32m            throw new RuntimeException("Only PENDING internships can be approved");[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        internship.setStatus(InternshipStatus.APPROVED);[m
+[32m+[m
+[32m+[m[32m        return mapToResponse(internshipRepository.save(internship));[m
+     }[m
+ [m
+     @Override[m
+     public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {[m
+[31m-        return InternshipResponse.builder()[m
+[31m-                .id(internshipId)[m
+[31m-                .status("REJECTED")[m
+[31m-                .build();[m
+[32m+[m
+[32m+[m[32m        Internship internship = getInternshipOrThrow(internshipId, tenantId);[m
+[32m+[m
+[32m+[m[32m        if (internship.getStatus() != InternshipStatus.PENDING) {[m
+[32m+[m[32m            throw new RuntimeException("Only PENDING internships can be rejected");[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        internship.setStatus(InternshipStatus.REJECTED);[m
+[32m+[m
+[32m+[m[32m        return mapToResponse(internshipRepository.save(internship));[m
+     }[m
+ [m
+     @Override[m
+     public InternshipResponse activate(UUID tenantId, UUID internshipId) {[m
+[31m-        return InternshipResponse.builder()[m
+[31m-                .id(internshipId)[m
+[31m-                .status("ACTIVE")[m
+[31m-                .build();[m
+[32m+[m
+[32m+[m[32m        Internship internship = getInternshipOrThrow(internshipId, tenantId);[m
+[32m+[m
+[32m+[m[32m        if (internship.getStatus() != InternshipStatus.APPROVED) {[m
+[32m+[m[32m            throw new RuntimeException("Only APPROVED internships can be activated");[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        internship.setStatus(InternshipStatus.ACTIVE);[m
+[32m+[m
+[32m+[m[32m        return mapToResponse(internshipRepository.save(internship));[m
+     }[m
+ [m
+     @Override[m
+     public InternshipResponse cancel(UUID tenantId, UUID internshipId, String reason) {[m
+[31m-        return InternshipResponse.builder()[m
+[31m-                .id(internshipId)[m
+[31m-                .status("CANCELLED")[m
+[31m-                .build();[m
+[32m+[m
+[32m+[m[32m        Internship internship = getInternshipOrThrow(internshipId, tenantId);[m
+[32m+[m
+[32m+[m[32m        if (internship.getStatus() == InternshipStatus.COMPLETED) {[m
+[32m+[m[32m            throw new RuntimeException("Completed internships cannot be cancelled");[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        internship.setStatus(InternshipStatus.CANCELLED);[m
+[32m+[m
+[32m+[m[32m        return mapToResponse(internshipRepository.save(internship));[m
+     }[m
+ [m
+     @Override[m
+     public InternshipResponse complete(UUID tenantId, UUID internshipId) {[m
+[31m-        return InternshipResponse.builder()[m
+[31m-                .id(internshipId)[m
+[31m-                .status("COMPLETED")[m
+[31m-                .build();[m
+[32m+[m
+[32m+[m[32m        Internship internship = getInternshipOrThrow(internshipId, tenantId);[m
+[32m+[m
+[32m+[m[32m        if (internship.getStatus() != InternshipStatus.ACTIVE) {[m
+[32m+[m[32m            throw new RuntimeException("Only ACTIVE internships can be completed");[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        internship.setStatus(InternshipStatus.COMPLETED);[m
+[32m+[m
+[32m+[m[32m        return mapToResponse(internshipRepository.save(internship));[m
+     }[m
+ [m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // ATTENDANCE (PHASE 2)[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m
+     @Override[m
+     public void registerAttendance(UUID tenantId, UUID internshipId, RegisterAttendanceRequest request) {[m
+[32m+[m[32m        throw new UnsupportedOperationException("Attendance not implemented yet");[m
+     }[m
+ [m
+     @Override[m
+     public void submitWeek(UUID tenantId, UUID internshipId, UUID weekId) {[m
+[32m+[m[32m        throw new UnsupportedOperationException("Attendance not implemented yet");[m
+     }[m
+ [m
+     @Override[m
+     public void approveWeek(UUID tenantId, UUID internshipId, UUID weekId) {[m
+[32m+[m[32m        throw new UnsupportedOperationException("Attendance not implemented yet");[m
+     }[m
+ [m
+     @Override[m
+     public void rejectWeek(UUID tenantId, UUID internshipId, UUID weekId, String reason) {[m
+[32m+[m[32m        throw new UnsupportedOperationException("Attendance not implemented yet");[m
+     }[m
+ [m
+     @Override[m
+     public Double calculateApprovedHours(UUID tenantId, UUID internshipId) {[m
+[31m-        return 0.0;[m
+[32m+[m[32m        throw new UnsupportedOperationException("Attendance not implemented yet");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // INTERNAL HELPERS[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m
+[32m+[m[32m    private Internship getInternshipOrThrow(UUID internshipId, UUID tenantId) {[m
+[32m+[m
+[32m+[m[32m        Internship internship = internshipRepository.findById(internshipId)[m
+[32m+[m[32m                .orElseThrow(() -> new RuntimeException("Internship not found"));[m
+[32m+[m
+[32m+[m[32m        validateTenant(internship, tenantId);[m
+[32m+[m
+[32m+[m[32m        return internship;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private void validateTenant(Internship internship, UUID tenantId) {[m
+[32m+[m
+[32m+[m[32m        if (!internship.getTenant().getId().equals(tenantId)) {[m
+[32m+[m[32m            throw new RuntimeException("Internship does not belong to tenant");[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m[32m    // MAPPER[m
+[32m+[m[32m    // -------------------------------------------------[m
+[32m+[m
+[32m+[m[32m    private InternshipResponse mapToResponse(Internship internship) {[m
+[32m+[m
+[32m+[m[32m        return InternshipResponse.builder()[m
+[32m+[m[32m                .id(internship.getId())[m
+[32m+[m[32m                .studentId(internship.getStudent().getId())[m
+[32m+[m[32m                .organizationId(internship.getOrganization().getId())[m
+[32m+[m[32m                .academicYear(internship.getAcademicYear())[m
+[32m+[m[32m                .academicPeriod(internship.getAcademicPeriod())[m
+[32m+[m[32m                .requiredHours(internship.getRequiredHours())[m
+[32m+[m[32m                .startDate(internship.getStartDate())[m
+[32m+[m[32m                .endDate(internship.getEndDate())[m
+[32m+[m[32m                .status(internship.getStatus().name())[m
+[32m+[m[32m                .build();[m
+     }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/java/com/klastr/klastrbackend/service/impl/StudentServiceImpl.java b/src/main/java/com/klastr/klastrbackend/service/impl/StudentServiceImpl.java[m
+[1mindex 98324f3..7bb49b9 100644[m
+[1m--- a/src/main/java/com/klastr/klastrbackend/service/impl/StudentServiceImpl.java[m
+[1m+++ b/src/main/java/com/klastr/klastrbackend/service/impl/StudentServiceImpl.java[m
+[36m@@ -5,6 +5,7 @@[m [mimport java.util.UUID;[m
+ [m
+ import org.springframework.http.HttpStatus;[m
+ import org.springframework.stereotype.Service;[m
+[32m+[m[32mimport org.springframework.transaction.annotation.Transactional;[m
+ [m
+ import com.klastr.klastrbackend.domain.organization.Organization;[m
+ import com.klastr.klastrbackend.domain.student.Student;[m
+[36m@@ -23,6 +24,7 @@[m [mimport lombok.RequiredArgsConstructor;[m
+ [m
+ @Service[m
+ @RequiredArgsConstructor[m
+[32m+[m[32m@Transactional[m
+ public class StudentServiceImpl implements StudentService {[m
+ [m
+         private final StudentRepository studentRepository;[m
+[36m@@ -30,6 +32,9 @@[m [mpublic class StudentServiceImpl implements StudentService {[m
+         private final OrganizationRepository organizationRepository;[m
+         private final StudentMapper studentMapper;[m
+ [m
+[32m+[m[32m        // -------------------------------------------------[m
+[32m+[m[32m        // CREATE[m
+[32m+[m[32m        // -------------------------------------------------[m
+         @Override[m
+         public StudentResponse create(UUID tenantId, CreateStudentRequest request) {[m
+ [m
+[36m@@ -53,18 +58,37 @@[m [mpublic class StudentServiceImpl implements StudentService {[m
+                 return studentMapper.toResponse(saved);[m
+         }[m
+ [m
+[32m+[m[32m        // -------------------------------------------------[m
+[32m+[m[32m        // FIND BY ID[m
+[32m+[m[32m        // -------------------------------------------------[m
+         @Override[m
+[32m+[m[32m        @Transactional(readOnly = true)[m
+         public StudentResponse findById(UUID tenantId, UUID studentId) {[m
+ [m
+[31m-                Student student = studentRepository.findByIdAndTenantId(studentId, tenantId)[m
+[32m+[m[32m                Student student = studentRepository.findById(studentId)[m
+                                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));[m
+ [m
+[32m+[m[32m                if (!student.getTenant().getId().equals(tenantId)) {[m
+[32m+[m[32m                        throw new ResourceNotFoundException("Student not found");[m
+[32m+[m[32m                }[m
+[32m+[m
+                 return studentMapper.toResponse(student);[m
+         }[m
+ [m
+[32m+[m[32m        // -------------------------------------------------[m
+[32m+[m[32m        // FIND BY ORGANIZATION[m
+[32m+[m[32m        // -------------------------------------------------[m
+         @Override[m
+[32m+[m[32m        @Transactional(readOnly = true)[m
+         public List<StudentResponse> findByOrganization(UUID tenantId, UUID organizationId) {[m
+ [m
+[32m+[m[32m                Organization organization = organizationRepository.findById(organizationId)[m
+[32m+[m[32m                                .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));[m
+[32m+[m
+[32m+[m[32m                if (!organization.getTenant().getId().equals(tenantId)) {[m
+[32m+[m[32m                        throw new ResourceNotFoundException("Organization not found");[m
+[32m+[m[32m                }[m
+[32m+[m
+                 return studentRepository.findByOrganizationId(organizationId)[m
+                                 .stream()[m
+                                 .filter(student -> student.getTenant().getId().equals(tenantId))[m
+[1mdiff --git a/src/main/resources/application.yml b/src/main/resources/application.yml[m
+[1mindex 10bb17d..5b982dd 100644[m
+[1m--- a/src/main/resources/application.yml[m
+[1m+++ b/src/main/resources/application.yml[m
+[36m@@ -13,5 +13,10 @@[m [mspring:[m
+         format_sql: true[m
+     open-in-view: false[m
+ [m
+[32m+[m[32m  security:[m
+[32m+[m[32m    user:[m
+[32m+[m[32m      name: admin[m
+[32m+[m[32m      password: admin123[m
+[32m+[m
+ server:[m
+   port: 8080[m
+\ No newline at end of file[m

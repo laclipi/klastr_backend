@@ -6,9 +6,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.klastr.klastrbackend.domain.internship.AgreementStatus;
-import com.klastr.klastrbackend.domain.internship.InternshipAgreement;
 import com.klastr.klastrbackend.domain.organization.Organization;
+import com.klastr.klastrbackend.v.AgreementStatus;
+import com.klastr.klastrbackend.com.klastr.klastrbackend.domain.internship.InternshipAgreement;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.AgreementResponse;
 import com.klastr.klastrbackend.dto.internship.CreateAgreementRequest;

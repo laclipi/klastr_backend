@@ -10,10 +10,9 @@ import com.klastr.klastrbackend.domain.user.User;
 import lombok.*;
 
 @Entity
-@Table(name = "internship_documents",
-        indexes = {
-            @Index(name = "idx_document_internship", columnList = "internship_id")
-        })
+@Table(name = "internship_documents", indexes = {
+        @Index(name = "idx_document_internship", columnList = "internship_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,7 +27,7 @@ public class InternshipDocument {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "internship_id", nullable = false)
-    private Internship internship;
+    private StudentInternship internship;
 
     @Column(nullable = false)
     private String fileName;

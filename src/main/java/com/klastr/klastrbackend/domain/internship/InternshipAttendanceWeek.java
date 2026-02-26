@@ -39,7 +39,7 @@ public class InternshipAttendanceWeek {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "internship_id", nullable = false, updatable = false)
-    private Internship internship;
+    private StudentInternship internship;
 
     @Column(nullable = false)
     private LocalDate weekStart;

@@ -1,6 +1,6 @@
 package com.klastr.klastrbackend.domain.internship.evaluation;
 
-import com.klastr.klastrbackend.domain.internship.Internship;
+import com.klastr.klastrbackend.domain.internship.StudentInternship;
 import com.klastr.klastrbackend.domain.user.User;
 import com.klastr.klastrbackend.domain.base.BaseEntity;
 import jakarta.persistence.*;
@@ -17,7 +17,7 @@ public class InternshipEvaluation extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "internship_id", nullable = false)
-    private Internship internship;
+    private StudentInternship internship;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "evaluated_by", nullable = false)
