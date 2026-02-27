@@ -261,7 +261,16 @@ public class InternshipServiceImpl implements InternshipService {
                     HttpStatus.BAD_REQUEST);
         }
 
-        week.approve(null); // CORREGIDO
+        week.approve(null);
+
+        // 🔥 MUY IMPORTANTE: aprobar todas las attendances de la week
+        attendanceRepository
+                .findAllByWeek_Id(weekId)
+                .forEach(attendance -> {
+                    attendance.setStatus(AttendanceStatus.APPROVED);
+                    attendanceRepository.save(attendance);
+                });
+
         weekRepository.save(week);
     }
 
