@@ -27,4 +27,9 @@ public interface InternshipAttendanceWeekRepository
          * Finds all weeks for a given internship.
          */
         List<InternshipAttendanceWeek> findByInternship_Id(UUID internshipId);
+
+        // 🔒 Tenant-safe access
+        Optional<InternshipAttendanceWeek> findByIdAndInternship_Tenant_Id(
+                        UUID weekId,
+                        UUID tenantId);
 }

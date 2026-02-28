@@ -28,5 +28,8 @@ public interface InternshipAttendanceRepository
 
         boolean existsByInternship_IdAndDate(UUID internshipId, LocalDate date);
 
-        List<InternshipAttendance> findAllByWeek_Id(UUID weekId);
+        // 🔒 Tenant-safe version
+        List<InternshipAttendance> findAllByWeek_IdAndWeek_Internship_Tenant_Id(
+                        UUID weekId,
+                        UUID tenantId);
 }

@@ -8,15 +8,22 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.klastr.klastrbackend.domain.internship.attendance.*;
-import com.klastr.klastrbackend.domain.internship.lifecycle.*;
+import com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus;
+import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendance;
+import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendanceWeek;
+import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
+import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternshipStatus;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.InternshipResponse;
 import com.klastr.klastrbackend.dto.internship.RegisterAttendanceRequest;
 import com.klastr.klastrbackend.mapper.InternshipMapper;
-import com.klastr.klastrbackend.repository.*;
+import com.klastr.klastrbackend.repository.InternshipAttendanceRepository;
+import com.klastr.klastrbackend.repository.InternshipAttendanceWeekRepository;
+import com.klastr.klastrbackend.repository.OrganizationRepository;
+import com.klastr.klastrbackend.repository.StudentInternshipRepository;
+import com.klastr.klastrbackend.repository.StudentRepository;
 import com.klastr.klastrbackend.service.InternshipService;
 
 import lombok.RequiredArgsConstructor;
@@ -50,7 +57,7 @@ public class InternshipServiceImpl implements InternshipService {
 
                 StudentInternship internship = internshipMapper.toEntity(request, student, organization);
 
-                // 🔥 CLAVE: asignar tenant
+                // Asignar tenant explícitamente
                 internship.setTenant(student.getTenant());
 
                 internship = internshipRepository.save(internship);
@@ -65,7 +72,8 @@ public class InternshipServiceImpl implements InternshipService {
         @Override
         public InternshipResponse findById(UUID tenantId, UUID internshipId) {
 
-                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                StudentInternship internship = internshipRepository
+                                .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow();
 
                 return internshipMapper.toResponse(internship);
@@ -88,7 +96,8 @@ public class InternshipServiceImpl implements InternshipService {
         @Override
         public InternshipResponse approve(UUID tenantId, UUID internshipId) {
 
-                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                StudentInternship internship = internshipRepository
+                                .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow();
 
                 internship.approve();
@@ -99,7 +108,8 @@ public class InternshipServiceImpl implements InternshipService {
         @Override
         public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {
 
-                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                StudentInternship internship = internshipRepository
+                                .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow();
 
                 internship.reject();
@@ -110,7 +120,8 @@ public class InternshipServiceImpl implements InternshipService {
         @Override
         public InternshipResponse activate(UUID tenantId, UUID internshipId) {
 
-                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                StudentInternship internship = internshipRepository
+                                .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow();
 
                 internship.activate();
@@ -121,7 +132,8 @@ public class InternshipServiceImpl implements InternshipService {
         @Override
         public InternshipResponse cancel(UUID tenantId, UUID internshipId, String reason) {
 
-                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                StudentInternship internship = internshipRepository
+                                .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow();
 
                 internship.cancel();
@@ -132,7 +144,8 @@ public class InternshipServiceImpl implements InternshipService {
         @Override
         public InternshipResponse complete(UUID tenantId, UUID internshipId) {
 
-                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                StudentInternship internship = internshipRepository
+                                .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow();
 
                 internship.complete();
@@ -147,7 +160,8 @@ public class InternshipServiceImpl implements InternshipService {
         @Override
         public void registerAttendance(UUID tenantId, UUID internshipId, RegisterAttendanceRequest request) {
 
-                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                StudentInternship internship = internshipRepository
+                                .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow();
 
                 LocalDate date = request.getDate();
@@ -182,26 +196,52 @@ public class InternshipServiceImpl implements InternshipService {
 
         @Override
         public void submitWeek(UUID tenantId, UUID internshipId, UUID weekId) {
-                weekRepository.findById(weekId).orElseThrow().submit();
+
+                InternshipAttendanceWeek week = weekRepository
+                                .findByIdAndInternship_Tenant_Id(weekId, tenantId)
+                                .orElseThrow(() -> new IllegalStateException("Week not found for tenant"));
+
+                week.submit();
         }
 
         @Override
         public void approveWeek(UUID tenantId, UUID internshipId, UUID weekId) {
 
-                InternshipAttendanceWeek week = weekRepository.findById(weekId).orElseThrow();
+                InternshipAttendanceWeek week = weekRepository
+                                .findByIdAndInternship_Tenant_Id(weekId, tenantId)
+                                .orElseThrow(() -> new IllegalStateException("Week not found for tenant"));
 
-                internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                StudentInternship internship = internshipRepository
+                                .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow();
 
                 week.approve("Approved");
 
-                attendanceRepository.findAllByWeek_Id(weekId)
+                attendanceRepository
+                                .findAllByWeek_IdAndWeek_Internship_Tenant_Id(weekId, tenantId)
                                 .forEach(a -> a.setStatus(AttendanceStatus.APPROVED));
+
+                Double approved = attendanceRepository.sumApprovedHours(
+                                internshipId,
+                                AttendanceStatus.APPROVED);
+
+                double approvedHours = approved != null ? approved : 0.0;
+
+                if (internship.getStatus() == StudentInternshipStatus.ACTIVE
+                                && approvedHours >= internship.getRequiredHours()) {
+
+                        internship.complete();
+                }
         }
 
         @Override
         public void rejectWeek(UUID tenantId, UUID internshipId, UUID weekId, String reason) {
-                weekRepository.findById(weekId).orElseThrow().reject(reason);
+
+                InternshipAttendanceWeek week = weekRepository
+                                .findByIdAndInternship_Tenant_Id(weekId, tenantId)
+                                .orElseThrow(() -> new IllegalStateException("Week not found for tenant"));
+
+                week.reject(reason);
         }
 
         // =====================================================
