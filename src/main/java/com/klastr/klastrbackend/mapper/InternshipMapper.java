@@ -6,7 +6,7 @@ import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
-import com.klastr.klastrbackend.dto.internship.StudentInternshipResponse;
+import com.klastr.klastrbackend.dto.internship.InternshipResponse;
 
 @Component
 public class InternshipMapper {
@@ -27,18 +27,18 @@ public class InternshipMapper {
                 .build();
     }
 
-    public StudentInternshipResponse toResponse(StudentInternship internship) {
+    public InternshipResponse toResponse(StudentInternship internship) {
 
-        StudentInternshipResponse response = new StudentInternshipResponse();
-        response.setId(internship.getId());
-        response.setStudentId(internship.getStudent().getId());
-        response.setOrganizationId(internship.getOrganization().getId());
-        response.setStartDate(internship.getStartDate());
-        response.setEndDate(internship.getEndDate());
-        response.setRequiredHours(internship.getRequiredHours());
-        response.setApprovedHours(null); // ajusta si lo gestionas
-        response.setStatus(internship.getStatus());
-
-        return response;
+        return InternshipResponse.builder()
+                .id(internship.getId())
+                .studentId(internship.getStudent().getId())
+                .organizationId(internship.getOrganization().getId())
+                .academicYear(internship.getAcademicYear())
+                .academicPeriod(internship.getAcademicPeriod())
+                .requiredHours(internship.getRequiredHours())
+                .startDate(internship.getStartDate())
+                .endDate(internship.getEndDate())
+                .status(internship.getStatus().name())
+                .build();
     }
 }

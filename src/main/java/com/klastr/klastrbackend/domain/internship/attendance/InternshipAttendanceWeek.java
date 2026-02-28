@@ -1,17 +1,14 @@
 package com.klastr.klastrbackend.domain.internship.attendance;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
-import com.klastr.klastrbackend.domain.user.User;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "internship_attendance_weeks")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,11 +18,9 @@ public class InternshipAttendanceWeek {
 
     @Id
     @GeneratedValue
-    @Column(nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "internship_id", nullable = false, updatable = false)
+    @ManyToOne(optional = false)
     private StudentInternship internship;
 
     @Column(nullable = false)
@@ -34,60 +29,40 @@ public class InternshipAttendanceWeek {
     @Column(nullable = false)
     private LocalDate weekEnd;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private WeekStatus status;
+    @Column(nullable = false)
+    private WeekStatus status = WeekStatus.OPEN;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "validated_by")
-    private User validatedBy;
-
-    private LocalDateTime validatedAt;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    // ==========================================
-    // LIFECYCLE
-    // ==========================================
+    // -------------------------------------------------
+    // STATE MACHINE
+    // -------------------------------------------------
 
     public void submit() {
         requireStatus(WeekStatus.OPEN);
         this.status = WeekStatus.SUBMITTED;
     }
 
-    public void approve(User validator) {
+    public void approve(String comment) {
         requireStatus(WeekStatus.SUBMITTED);
         this.status = WeekStatus.APPROVED;
-        this.validatedBy = validator;
-        this.validatedAt = LocalDateTime.now();
     }
 
-    public void reject(User validator) {
+    public void reject(String comment) {
         requireStatus(WeekStatus.SUBMITTED);
         this.status = WeekStatus.REJECTED;
-        this.validatedBy = validator;
-        this.validatedAt = LocalDateTime.now();
     }
 
     private void requireStatus(WeekStatus expected) {
         if (this.status != expected) {
             throw new IllegalStateException(
                     "Invalid state transition. Expected: "
-                            + expected
-                            + ", but was: "
-                            + this.status);
+                            + expected + ", but was: " + this.status);
         }
     }
 
-    // ==========================================
-    // PERSISTENCE
-    // ==========================================
-
     @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-
+    public void prePersist() {
         if (this.status == null) {
             this.status = WeekStatus.OPEN;
         }

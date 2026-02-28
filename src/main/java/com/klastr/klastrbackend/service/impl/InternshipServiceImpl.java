@@ -1,32 +1,22 @@
 package com.klastr.klastrbackend.service.impl;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus;
-import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendance;
-import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendanceWeek;
-import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
+import com.klastr.klastrbackend.domain.internship.attendance.*;
+import com.klastr.klastrbackend.domain.internship.lifecycle.*;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
-import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.InternshipResponse;
 import com.klastr.klastrbackend.dto.internship.RegisterAttendanceRequest;
-import com.klastr.klastrbackend.exception.BusinessException;
-import com.klastr.klastrbackend.exception.EntityNotFoundException;
-import com.klastr.klastrbackend.repository.InternshipAttendanceRepository;
-import com.klastr.klastrbackend.repository.InternshipAttendanceWeekRepository;
-import com.klastr.klastrbackend.repository.OrganizationRepository;
-import com.klastr.klastrbackend.repository.StudentInternshipRepository;
-import com.klastr.klastrbackend.repository.StudentRepository;
-import com.klastr.klastrbackend.repository.TenantRepository;
+import com.klastr.klastrbackend.mapper.InternshipMapper;
+import com.klastr.klastrbackend.repository.*;
 import com.klastr.klastrbackend.service.InternshipService;
 
 import lombok.RequiredArgsConstructor;
@@ -36,282 +26,195 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class InternshipServiceImpl implements InternshipService {
 
-    private final StudentInternshipRepository internshipRepository;
-    private final StudentRepository studentRepository;
-    private final OrganizationRepository organizationRepository;
-    private final TenantRepository tenantRepository;
-    private final InternshipAttendanceRepository attendanceRepository;
-    private final InternshipAttendanceWeekRepository weekRepository;
+        private final StudentInternshipRepository internshipRepository;
+        private final StudentRepository studentRepository;
+        private final OrganizationRepository organizationRepository;
+        private final InternshipAttendanceRepository attendanceRepository;
+        private final InternshipAttendanceWeekRepository weekRepository;
+        private final InternshipMapper internshipMapper;
 
-    // -------------------------------------------------
-    // CREATE
-    // -------------------------------------------------
+        // =====================================================
+        // CREATE
+        // =====================================================
 
-    @Override
-    public InternshipResponse create(UUID tenantId, CreateInternshipRequest request) {
+        @Override
+        public InternshipResponse create(UUID tenantId, CreateInternshipRequest request) {
 
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new EntityNotFoundException("Tenant not found"));
+                Student student = studentRepository
+                                .findById(request.getStudentId())
+                                .orElseThrow();
 
-        Student student = studentRepository.findById(request.getStudentId())
-                .orElseThrow(() -> new EntityNotFoundException("Student not found"));
+                Organization organization = organizationRepository
+                                .findById(request.getOrganizationId())
+                                .orElseThrow();
 
-        Organization organization = organizationRepository.findById(request.getOrganizationId())
-                .orElseThrow(() -> new EntityNotFoundException("Organization not found"));
+                StudentInternship internship = internshipMapper.toEntity(request, student, organization);
 
-        if (!organization.getTenant().getId().equals(tenantId)) {
-            throw new BusinessException(
-                    "Organization does not belong to tenant",
-                    HttpStatus.BAD_REQUEST);
+                // 🔥 CLAVE: asignar tenant
+                internship.setTenant(student.getTenant());
+
+                internship = internshipRepository.save(internship);
+
+                return internshipMapper.toResponse(internship);
         }
 
-        StudentInternship internship = StudentInternship.builder()
-                .tenant(tenant)
-                .student(student)
-                .organization(organization)
-                .academicYear(request.getAcademicYear())
-                .academicPeriod(request.getAcademicPeriod())
-                .requiredHours(request.getRequiredHours())
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .build();
+        // =====================================================
+        // FIND
+        // =====================================================
 
-        return mapToResponse(internshipRepository.save(internship));
-    }
+        @Override
+        public InternshipResponse findById(UUID tenantId, UUID internshipId) {
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<InternshipResponse> findByStudent(UUID tenantId, UUID studentId) {
-        return internshipRepository
-                .findByTenant_IdAndStudent_Id(tenantId, studentId)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
+                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                                .orElseThrow();
 
-    @Override
-    @Transactional(readOnly = true)
-    public InternshipResponse findById(UUID tenantId, UUID internshipId) {
-        return mapToResponse(getInternshipOrThrow(internshipId, tenantId));
-    }
-
-    // -------------------------------------------------
-    // COMPLETE
-    // -------------------------------------------------
-
-    @Override
-    public InternshipResponse complete(UUID tenantId, UUID internshipId) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-
-        double approvedHours = Optional
-                .ofNullable(attendanceRepository
-                        .sumApprovedHours(internshipId, AttendanceStatus.APPROVED))
-                .orElse(0.0);
-
-        if (Double.compare(approvedHours, internship.getRequiredHours()) < 0) {
-            throw new BusinessException(
-                    "Cannot complete internship. Approved hours: "
-                            + approvedHours + " / Required: "
-                            + internship.getRequiredHours(),
-                    HttpStatus.BAD_REQUEST);
+                return internshipMapper.toResponse(internship);
         }
 
-        internship.complete();
-        return mapToResponse(internshipRepository.save(internship));
-    }
+        @Override
+        public List<InternshipResponse> findByStudent(UUID tenantId, UUID studentId) {
 
-    // -------------------------------------------------
-    // LIFECYCLE
-    // -------------------------------------------------
-
-    @Override
-    public InternshipResponse activate(UUID tenantId, UUID internshipId) {
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.activate();
-        return mapToResponse(internshipRepository.save(internship));
-    }
-
-    @Override
-    public InternshipResponse approve(UUID tenantId, UUID internshipId) {
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.approve();
-        return mapToResponse(internshipRepository.save(internship));
-    }
-
-    @Override
-    public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.reject();
-        return mapToResponse(internshipRepository.save(internship));
-    }
-
-    @Override
-    public InternshipResponse cancel(UUID tenantId, UUID internshipId, String reason) {
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.cancel();
-        return mapToResponse(internshipRepository.save(internship));
-    }
-
-    // -------------------------------------------------
-    // ATTENDANCE
-    // -------------------------------------------------
-
-    @Override
-    public void registerAttendance(UUID tenantId, UUID internshipId, RegisterAttendanceRequest request) {
-
-        StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-
-        if (!internship.getStatus().isActive()) {
-            throw new BusinessException(
-                    "Attendance can only be registered for ACTIVE internships",
-                    HttpStatus.BAD_REQUEST);
+                return internshipRepository
+                                .findByTenant_IdAndStudent_Id(tenantId, studentId)
+                                .stream()
+                                .map(internshipMapper::toResponse)
+                                .toList();
         }
 
-        if (request.getDate().isBefore(internship.getStartDate())
-                || request.getDate().isAfter(internship.getEndDate())) {
-            throw new BusinessException(
-                    "Date outside internship range",
-                    HttpStatus.BAD_REQUEST);
+        // =====================================================
+        // STATE FLOW
+        // =====================================================
+
+        @Override
+        public InternshipResponse approve(UUID tenantId, UUID internshipId) {
+
+                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                                .orElseThrow();
+
+                internship.approve();
+
+                return internshipMapper.toResponse(internship);
         }
 
-        if (attendanceRepository.existsByInternship_IdAndDate(internshipId, request.getDate())) {
-            throw new BusinessException(
-                    "Attendance already registered for this date",
-                    HttpStatus.BAD_REQUEST);
+        @Override
+        public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {
+
+                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                                .orElseThrow();
+
+                internship.reject();
+
+                return internshipMapper.toResponse(internship);
         }
 
-        InternshipAttendanceWeek week = weekRepository
-                .findByInternship_IdAndWeekStartLessThanEqualAndWeekEndGreaterThanEqual(
-                        internshipId,
-                        request.getDate(),
-                        request.getDate())
-                .orElseGet(() -> createWeek(internship, request.getDate()));
+        @Override
+        public InternshipResponse activate(UUID tenantId, UUID internshipId) {
 
-        InternshipAttendance attendance = InternshipAttendance.builder()
-                .internship(internship)
-                .week(week)
-                .date(request.getDate())
-                .hoursWorked(request.getHours().doubleValue())
-                .status(AttendanceStatus.PENDING)
-                .build();
+                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                                .orElseThrow();
 
-        attendanceRepository.save(attendance);
-    }
+                internship.activate();
 
-    @Override
-    public void submitWeek(UUID tenantId, UUID internshipId, UUID weekId) {
-
-        getInternshipOrThrow(internshipId, tenantId);
-
-        InternshipAttendanceWeek week = weekRepository.findById(weekId)
-                .orElseThrow(() -> new EntityNotFoundException("Week not found"));
-
-        if (!week.getInternship().getId().equals(internshipId)) {
-            throw new BusinessException("Week does not belong to internship", HttpStatus.BAD_REQUEST);
+                return internshipMapper.toResponse(internship);
         }
 
-        week.submit();
-        weekRepository.save(week);
-    }
+        @Override
+        public InternshipResponse cancel(UUID tenantId, UUID internshipId, String reason) {
 
-    @Override
-    public void rejectWeek(UUID tenantId, UUID internshipId, UUID weekId, String reason) {
+                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                                .orElseThrow();
 
-        getInternshipOrThrow(internshipId, tenantId);
+                internship.cancel();
 
-        InternshipAttendanceWeek week = weekRepository.findById(weekId)
-                .orElseThrow(() -> new EntityNotFoundException("Week not found"));
-
-        if (!week.getInternship().getId().equals(internshipId)) {
-            throw new BusinessException("Week does not belong to internship", HttpStatus.BAD_REQUEST);
+                return internshipMapper.toResponse(internship);
         }
 
-        week.reject(null);
-    }
+        @Override
+        public InternshipResponse complete(UUID tenantId, UUID internshipId) {
 
-    @Override
-    public void approveWeek(UUID tenantId, UUID internshipId, UUID weekId) {
+                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                                .orElseThrow();
 
-        getInternshipOrThrow(internshipId, tenantId);
+                internship.complete();
 
-        InternshipAttendanceWeek week = weekRepository.findById(weekId)
-                .orElseThrow(() -> new EntityNotFoundException("Week not found"));
-
-        if (!week.getInternship().getId().equals(internshipId)) {
-            throw new BusinessException("Week does not belong to internship", HttpStatus.BAD_REQUEST);
+                return internshipMapper.toResponse(internship);
         }
 
-        week.approve(null);
+        // =====================================================
+        // ATTENDANCE
+        // =====================================================
 
-        attendanceRepository
-                .findAllByWeek_Id(weekId)
-                .forEach(att -> {
-                    att.setStatus(AttendanceStatus.APPROVED);
-                    attendanceRepository.save(att);
-                });
+        @Override
+        public void registerAttendance(UUID tenantId, UUID internshipId, RegisterAttendanceRequest request) {
 
-        weekRepository.save(week);
-    }
+                StudentInternship internship = internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                                .orElseThrow();
 
-    // -------------------------------------------------
-    // CALCULATIONS
-    // -------------------------------------------------
+                LocalDate date = request.getDate();
 
-    @Override
-    @Transactional(readOnly = true)
-    public Double calculateApprovedHours(UUID tenantId, UUID internshipId) {
+                if (attendanceRepository.existsByInternship_IdAndDate(internshipId, date)) {
+                        throw new IllegalStateException("Attendance already registered for this date");
+                }
 
-        getInternshipOrThrow(internshipId, tenantId);
+                LocalDate weekStart = date.with(DayOfWeek.MONDAY);
+                LocalDate weekEnd = weekStart.plusDays(6);
 
-        return Optional
-                .ofNullable(attendanceRepository
-                        .sumApprovedHours(internshipId, AttendanceStatus.APPROVED))
-                .orElse(0.0);
-    }
+                InternshipAttendanceWeek week = weekRepository
+                                .findByInternship_IdAndWeekStartLessThanEqualAndWeekEndGreaterThanEqual(
+                                                internshipId, date, date)
+                                .orElseGet(() -> weekRepository.save(
+                                                InternshipAttendanceWeek.builder()
+                                                                .internship(internship)
+                                                                .weekStart(weekStart)
+                                                                .weekEnd(weekEnd)
+                                                                .build()));
 
-    // -------------------------------------------------
-    // HELPERS
-    // -------------------------------------------------
+                InternshipAttendance attendance = InternshipAttendance.builder()
+                                .internship(internship)
+                                .week(week)
+                                .date(date)
+                                .hoursWorked(request.getHours().doubleValue())
+                                .status(AttendanceStatus.PENDING)
+                                .build();
 
-    private StudentInternship getInternshipOrThrow(UUID internshipId, UUID tenantId) {
-
-        StudentInternship internship = internshipRepository.findById(internshipId)
-                .orElseThrow(() -> new EntityNotFoundException("Internship not found"));
-
-        if (!internship.getTenant().getId().equals(tenantId)) {
-            throw new BusinessException("Internship does not belong to tenant", HttpStatus.BAD_REQUEST);
+                attendanceRepository.save(attendance);
         }
 
-        return internship;
-    }
+        @Override
+        public void submitWeek(UUID tenantId, UUID internshipId, UUID weekId) {
+                weekRepository.findById(weekId).orElseThrow().submit();
+        }
 
-    private InternshipAttendanceWeek createWeek(StudentInternship internship, LocalDate date) {
+        @Override
+        public void approveWeek(UUID tenantId, UUID internshipId, UUID weekId) {
 
-        LocalDate weekStart = date.minusDays(date.getDayOfWeek().getValue() - 1);
-        LocalDate weekEnd = weekStart.plusDays(6);
+                InternshipAttendanceWeek week = weekRepository.findById(weekId).orElseThrow();
 
-        InternshipAttendanceWeek week = InternshipAttendanceWeek.builder()
-                .internship(internship)
-                .weekStart(weekStart)
-                .weekEnd(weekEnd)
-                .build();
+                internshipRepository.findByIdAndTenant_Id(internshipId, tenantId)
+                                .orElseThrow();
 
-        return weekRepository.save(week);
-    }
+                week.approve("Approved");
 
-    private InternshipResponse mapToResponse(StudentInternship internship) {
+                attendanceRepository.findAllByWeek_Id(weekId)
+                                .forEach(a -> a.setStatus(AttendanceStatus.APPROVED));
+        }
 
-        return InternshipResponse.builder()
-                .id(internship.getId())
-                .studentId(internship.getStudent().getId())
-                .organizationId(internship.getOrganization().getId())
-                .academicYear(internship.getAcademicYear())
-                .academicPeriod(internship.getAcademicPeriod())
-                .requiredHours(internship.getRequiredHours())
-                .startDate(internship.getStartDate())
-                .endDate(internship.getEndDate())
-                .status(internship.getStatus().name())
-                .build();
-    }
+        @Override
+        public void rejectWeek(UUID tenantId, UUID internshipId, UUID weekId, String reason) {
+                weekRepository.findById(weekId).orElseThrow().reject(reason);
+        }
+
+        // =====================================================
+        // HOURS
+        // =====================================================
+
+        @Override
+        public Double calculateApprovedHours(UUID tenantId, UUID internshipId) {
+
+                Double result = attendanceRepository.sumApprovedHours(
+                                internshipId,
+                                AttendanceStatus.APPROVED);
+
+                return result != null ? result : 0.0;
+        }
 }

@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "internships") // Se mantiene para no romper esquema existente
+@Table(name = "internships")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,23 +32,14 @@ import lombok.Setter;
 @Builder
 public class StudentInternship extends BaseEntity {
 
-    /**
-     * Alumno que realiza la FCT.
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    /**
-     * Organización donde se realiza la FCT.
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
-    /**
-     * Tenant al que pertenece la FCT.
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
@@ -59,9 +50,6 @@ public class StudentInternship extends BaseEntity {
     @Column(nullable = false, length = 20)
     private String academicPeriod;
 
-    /**
-     * Total de horas obligatorias que debe completar el alumno.
-     */
     @Column(nullable = false)
     private Integer requiredHours;
 
@@ -108,6 +96,11 @@ public class StudentInternship extends BaseEntity {
                     "Completed internships cannot be cancelled");
         }
         this.status = StudentInternshipStatus.CANCELLED;
+    }
+
+    // ✅ Helper para tests y lógica de dominio
+    public boolean isCompleted() {
+        return this.status == StudentInternshipStatus.COMPLETED;
     }
 
     private void requireStatus(StudentInternshipStatus expected) {

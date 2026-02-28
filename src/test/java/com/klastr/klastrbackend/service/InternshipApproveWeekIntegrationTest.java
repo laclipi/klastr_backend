@@ -3,21 +3,23 @@ package com.klastr.klastrbackend.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
-import java.util.UUID;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus;
+import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendance;
 import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendanceWeek;
 import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
-import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternshipStatus;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.RegisterAttendanceRequest;
+import com.klastr.klastrbackend.repository.InternshipAttendanceRepository;
 import com.klastr.klastrbackend.repository.InternshipAttendanceWeekRepository;
 import com.klastr.klastrbackend.repository.OrganizationRepository;
 import com.klastr.klastrbackend.repository.StudentInternshipRepository;
@@ -26,7 +28,7 @@ import com.klastr.klastrbackend.repository.TenantRepository;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class InternshipServiceIntegrationTest {
+class InternshipApproveWeekIntegrationTest {
 
         @Autowired
         private InternshipService internshipService;
@@ -46,8 +48,11 @@ class InternshipServiceIntegrationTest {
         @Autowired
         private InternshipAttendanceWeekRepository weekRepository;
 
+        @Autowired
+        private InternshipAttendanceRepository attendanceRepository;
+
         @Test
-        void shouldCompleteInternshipWhenApprovedHoursAreEnough() {
+        void shouldApproveWeekAndAllAttendances() {
 
                 // -------------------------
                 // Arrange
@@ -55,12 +60,12 @@ class InternshipServiceIntegrationTest {
 
                 Tenant tenant = tenantRepository.save(
                                 Tenant.builder()
-                                                .name("Tenant-" + UUID.randomUUID())
+                                                .name("Test Tenant")
                                                 .build());
 
                 Organization organization = organizationRepository.save(
                                 Organization.builder()
-                                                .name("Organization-" + UUID.randomUUID())
+                                                .name("Test Org")
                                                 .tenant(tenant)
                                                 .build());
 
@@ -70,7 +75,7 @@ class InternshipServiceIntegrationTest {
                                                 .organization(organization)
                                                 .firstName("John")
                                                 .lastName("Doe")
-                                                .email("john.doe+" + UUID.randomUUID() + "@test.com")
+                                                .email("john.doe@test.com")
                                                 .build());
 
                 CreateInternshipRequest createRequest = CreateInternshipRequest.builder()
@@ -78,7 +83,7 @@ class InternshipServiceIntegrationTest {
                                 .organizationId(organization.getId())
                                 .academicYear(2025)
                                 .academicPeriod("SPRING")
-                                .requiredHours(8)
+                                .requiredHours(20)
                                 .startDate(LocalDate.now().minusDays(5))
                                 .endDate(LocalDate.now().plusDays(30))
                                 .build();
@@ -89,12 +94,11 @@ class InternshipServiceIntegrationTest {
                                 .findById(response.getId())
                                 .orElseThrow();
 
-                // DRAFT → APPROVED → ACTIVE
+                // Respect lifecycle: DRAFT → APPROVED → ACTIVE
                 internship.approve();
                 internship.activate();
                 internshipRepository.save(internship);
 
-                // Register 8 hours
                 RegisterAttendanceRequest attendanceRequest = new RegisterAttendanceRequest(
                                 LocalDate.now().minusDays(1),
                                 8);
@@ -104,12 +108,7 @@ class InternshipServiceIntegrationTest {
                                 internship.getId(),
                                 attendanceRequest);
 
-                // 🔥 Obtener la week correcta (no usar findAll().get(0))
-                InternshipAttendanceWeek week = weekRepository
-                                .findByInternship_Id(internship.getId())
-                                .stream()
-                                .findFirst()
-                                .orElseThrow();
+                InternshipAttendanceWeek week = weekRepository.findAll().get(0);
 
                 // OPEN → SUBMITTED
                 internshipService.submitWeek(
@@ -117,24 +116,29 @@ class InternshipServiceIntegrationTest {
                                 internship.getId(),
                                 week.getId());
 
+                // -------------------------
+                // Act
+                // -------------------------
+
                 // SUBMITTED → APPROVED
                 internshipService.approveWeek(
                                 tenant.getId(),
                                 internship.getId(),
                                 week.getId());
 
-                // Ahora completar internship
-                internshipService.complete(
-                                tenant.getId(),
-                                internship.getId());
-
                 // -------------------------
                 // Assert
                 // -------------------------
 
-                StudentInternship updatedInternship = internshipRepository.findById(internship.getId()).orElseThrow();
+                InternshipAttendanceWeek updatedWeek = weekRepository.findById(week.getId()).orElseThrow();
 
-                assertThat(updatedInternship.getStatus())
-                                .isEqualTo(StudentInternshipStatus.COMPLETED);
+                assertThat(updatedWeek.getStatus())
+                                .isEqualTo(com.klastr.klastrbackend.domain.internship.attendance.WeekStatus.APPROVED);
+
+                List<InternshipAttendance> attendances = attendanceRepository.findAllByWeek_Id(week.getId());
+
+                assertThat(attendances)
+                                .isNotEmpty()
+                                .allMatch(a -> a.getStatus() == AttendanceStatus.APPROVED);
         }
 }
