@@ -2,6 +2,7 @@ package com.klastr.klastrbackend.service.impl;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -103,13 +104,12 @@ public class InternshipServiceImpl implements InternshipService {
 
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
 
-        Double approvedHours = attendanceRepository
-                .sumApprovedHours(internshipId, AttendanceStatus.APPROVED);
+        double approvedHours = Optional
+                .ofNullable(attendanceRepository
+                        .sumApprovedHours(internshipId, AttendanceStatus.APPROVED))
+                .orElse(0.0);
 
-        if (approvedHours == null)
-            approvedHours = 0.0;
-
-        if (approvedHours < internship.getRequiredHours()) {
+        if (Double.compare(approvedHours, internship.getRequiredHours()) < 0) {
             throw new BusinessException(
                     "Cannot complete internship. Approved hours: "
                             + approvedHours + " / Required: "
@@ -133,16 +133,16 @@ public class InternshipServiceImpl implements InternshipService {
     }
 
     @Override
-    public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {
+    public InternshipResponse approve(UUID tenantId, UUID internshipId) {
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.reject();
+        internship.approve();
         return mapToResponse(internshipRepository.save(internship));
     }
 
     @Override
-    public InternshipResponse approve(UUID tenantId, UUID internshipId) {
+    public InternshipResponse reject(UUID tenantId, UUID internshipId, String reason) {
         StudentInternship internship = getInternshipOrThrow(internshipId, tenantId);
-        internship.approve();
+        internship.reject();
         return mapToResponse(internshipRepository.save(internship));
     }
 
@@ -188,12 +188,6 @@ public class InternshipServiceImpl implements InternshipService {
                         request.getDate())
                 .orElseGet(() -> createWeek(internship, request.getDate()));
 
-        if (!week.getStatus().isOpen()) {
-            throw new BusinessException(
-                    "Cannot register attendance in a closed week",
-                    HttpStatus.BAD_REQUEST);
-        }
-
         InternshipAttendance attendance = InternshipAttendance.builder()
                 .internship(internship)
                 .week(week)
@@ -214,15 +208,7 @@ public class InternshipServiceImpl implements InternshipService {
                 .orElseThrow(() -> new EntityNotFoundException("Week not found"));
 
         if (!week.getInternship().getId().equals(internshipId)) {
-            throw new BusinessException(
-                    "Week does not belong to internship",
-                    HttpStatus.BAD_REQUEST);
-        }
-
-        if (attendanceRepository.countByWeek_Id(weekId) == 0) {
-            throw new BusinessException(
-                    "Cannot submit an empty week",
-                    HttpStatus.BAD_REQUEST);
+            throw new BusinessException("Week does not belong to internship", HttpStatus.BAD_REQUEST);
         }
 
         week.submit();
@@ -238,13 +224,10 @@ public class InternshipServiceImpl implements InternshipService {
                 .orElseThrow(() -> new EntityNotFoundException("Week not found"));
 
         if (!week.getInternship().getId().equals(internshipId)) {
-            throw new BusinessException(
-                    "Week does not belong to internship",
-                    HttpStatus.BAD_REQUEST);
+            throw new BusinessException("Week does not belong to internship", HttpStatus.BAD_REQUEST);
         }
 
-        week.reject(null); // CORREGIDO
-        weekRepository.save(week);
+        week.reject(null);
     }
 
     @Override
@@ -256,23 +239,24 @@ public class InternshipServiceImpl implements InternshipService {
                 .orElseThrow(() -> new EntityNotFoundException("Week not found"));
 
         if (!week.getInternship().getId().equals(internshipId)) {
-            throw new BusinessException(
-                    "Week does not belong to internship",
-                    HttpStatus.BAD_REQUEST);
+            throw new BusinessException("Week does not belong to internship", HttpStatus.BAD_REQUEST);
         }
 
         week.approve(null);
 
-        // 🔥 MUY IMPORTANTE: aprobar todas las attendances de la week
         attendanceRepository
                 .findAllByWeek_Id(weekId)
-                .forEach(attendance -> {
-                    attendance.setStatus(AttendanceStatus.APPROVED);
-                    attendanceRepository.save(attendance);
+                .forEach(att -> {
+                    att.setStatus(AttendanceStatus.APPROVED);
+                    attendanceRepository.save(att);
                 });
 
         weekRepository.save(week);
     }
+
+    // -------------------------------------------------
+    // CALCULATIONS
+    // -------------------------------------------------
 
     @Override
     @Transactional(readOnly = true)
@@ -280,10 +264,10 @@ public class InternshipServiceImpl implements InternshipService {
 
         getInternshipOrThrow(internshipId, tenantId);
 
-        Double approvedHours = attendanceRepository
-                .sumApprovedHours(internshipId, AttendanceStatus.APPROVED);
-
-        return approvedHours != null ? approvedHours : 0.0;
+        return Optional
+                .ofNullable(attendanceRepository
+                        .sumApprovedHours(internshipId, AttendanceStatus.APPROVED))
+                .orElse(0.0);
     }
 
     // -------------------------------------------------
@@ -296,9 +280,7 @@ public class InternshipServiceImpl implements InternshipService {
                 .orElseThrow(() -> new EntityNotFoundException("Internship not found"));
 
         if (!internship.getTenant().getId().equals(tenantId)) {
-            throw new BusinessException(
-                    "Internship does not belong to tenant",
-                    HttpStatus.BAD_REQUEST);
+            throw new BusinessException("Internship does not belong to tenant", HttpStatus.BAD_REQUEST);
         }
 
         return internship;
