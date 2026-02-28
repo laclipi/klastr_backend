@@ -13,6 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus;
 import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendance;
 import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendanceWeek;
+import com.klastr.klastrbackend.domain.internship.attendance.WeekStatus;
 import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
@@ -94,7 +95,7 @@ class InternshipApproveWeekIntegrationTest {
                                 .findById(response.getId())
                                 .orElseThrow();
 
-                // Respect lifecycle: DRAFT → APPROVED → ACTIVE
+                // DRAFT → APPROVED → ACTIVE
                 internship.approve();
                 internship.activate();
                 internshipRepository.save(internship);
@@ -110,7 +111,6 @@ class InternshipApproveWeekIntegrationTest {
 
                 InternshipAttendanceWeek week = weekRepository.findAll().get(0);
 
-                // OPEN → SUBMITTED
                 internshipService.submitWeek(
                                 tenant.getId(),
                                 internship.getId(),
@@ -120,7 +120,6 @@ class InternshipApproveWeekIntegrationTest {
                 // Act
                 // -------------------------
 
-                // SUBMITTED → APPROVED
                 internshipService.approveWeek(
                                 tenant.getId(),
                                 internship.getId(),
@@ -130,12 +129,17 @@ class InternshipApproveWeekIntegrationTest {
                 // Assert
                 // -------------------------
 
-                InternshipAttendanceWeek updatedWeek = weekRepository.findById(week.getId()).orElseThrow();
+                InternshipAttendanceWeek updatedWeek = weekRepository
+                                .findById(week.getId())
+                                .orElseThrow();
 
                 assertThat(updatedWeek.getStatus())
-                                .isEqualTo(com.klastr.klastrbackend.domain.internship.attendance.WeekStatus.APPROVED);
+                                .isEqualTo(WeekStatus.APPROVED);
 
-                List<InternshipAttendance> attendances = attendanceRepository.findAllByWeek_Id(week.getId());
+                List<InternshipAttendance> attendances = attendanceRepository
+                                .findAllByWeek_IdAndWeek_Internship_Tenant_Id(
+                                                week.getId(),
+                                                tenant.getId());
 
                 assertThat(attendances)
                                 .isNotEmpty()

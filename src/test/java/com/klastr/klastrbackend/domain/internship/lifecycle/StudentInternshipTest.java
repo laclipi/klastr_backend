@@ -1,8 +1,11 @@
 package com.klastr.klastrbackend.domain.internship.lifecycle;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.klastr.klastrbackend.exception.BusinessException;
 
 class StudentInternshipTest {
 
@@ -40,7 +43,7 @@ class StudentInternshipTest {
 
         internship.onCreate();
 
-        assertThrows(IllegalStateException.class, internship::activate);
+        assertThrows(BusinessException.class, internship::activate);
     }
 
     @Test

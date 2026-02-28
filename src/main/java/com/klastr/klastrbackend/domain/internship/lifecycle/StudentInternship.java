@@ -3,25 +3,16 @@ package com.klastr.klastrbackend.domain.internship.lifecycle;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.springframework.http.HttpStatus;
+
 import com.klastr.klastrbackend.domain.base.BaseEntity;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
+import com.klastr.klastrbackend.exception.BusinessException;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "internships")
@@ -92,24 +83,25 @@ public class StudentInternship extends BaseEntity {
 
     public void cancel() {
         if (this.status == StudentInternshipStatus.COMPLETED) {
-            throw new IllegalStateException(
-                    "Completed internships cannot be cancelled");
+            throw new BusinessException(
+                    "Completed internships cannot be cancelled",
+                    HttpStatus.CONFLICT);
         }
         this.status = StudentInternshipStatus.CANCELLED;
     }
 
-    // ✅ Helper para tests y lógica de dominio
     public boolean isCompleted() {
         return this.status == StudentInternshipStatus.COMPLETED;
     }
 
     private void requireStatus(StudentInternshipStatus expected) {
         if (this.status != expected) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Invalid state transition. Expected: "
                             + expected
                             + ", but was: "
-                            + this.status);
+                            + this.status,
+                    HttpStatus.CONFLICT);
         }
     }
 
