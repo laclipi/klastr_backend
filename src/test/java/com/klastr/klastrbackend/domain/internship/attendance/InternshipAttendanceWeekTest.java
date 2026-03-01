@@ -1,20 +1,22 @@
 package com.klastr.klastrbackend.domain.internship.attendance;
 
-import org.junit.jupiter.api.Test;
-
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+
+import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
 
 class InternshipAttendanceWeekTest {
 
     private InternshipAttendanceWeek newWeek() {
-        return InternshipAttendanceWeek.builder()
-                .internship(null) // si es obligatorio, mock o crea dummy
-                .weekStart(LocalDate.now())
-                .weekEnd(LocalDate.now().plusDays(6))
-                .status(WeekStatus.OPEN)
-                .build();
+
+        StudentInternship dummyInternship = StudentInternship.builder().build(); // mínimo válido
+
+        LocalDate monday = LocalDate.of(2026, 3, 2); // lunes real
+
+        return InternshipAttendanceWeek.create(dummyInternship, monday);
     }
 
     @Test
@@ -50,9 +52,9 @@ class InternshipAttendanceWeekTest {
         week.submit();
         week.approve("ok");
 
+        LocalDate monday = LocalDate.of(2026, 3, 9);
+
         assertThrows(IllegalStateException.class,
-                () -> week.changeWeekDates(
-                        LocalDate.now(),
-                        LocalDate.now().plusDays(6)));
+                () -> week.changeWeekDates(monday));
     }
 }

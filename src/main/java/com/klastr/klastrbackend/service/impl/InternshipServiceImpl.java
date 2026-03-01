@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +54,6 @@ public class InternshipServiceImpl implements InternshipService {
 
                 StudentInternship internship = internshipMapper.toEntity(request, student, organization);
 
-                // 🔐 Multi-tenant seguro
                 internship.setTenant(student.getTenant());
 
                 internship = internshipRepository.save(internship);
@@ -97,7 +97,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.approve();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -109,7 +108,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.reject();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -121,7 +119,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.activate();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -133,7 +130,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.cancel();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -144,11 +140,12 @@ public class InternshipServiceImpl implements InternshipService {
                                 .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
-                internship.complete();
+                double approvedHours = calculateApprovedHours(tenantId, internshipId);
+
+                internship.complete(approvedHours);
 
                 return internshipMapper.toResponse(internship);
         }
-
         // =====================================================
         // ATTENDANCE
         // =====================================================
@@ -169,17 +166,33 @@ public class InternshipServiceImpl implements InternshipService {
                 }
 
                 LocalDate weekStart = date.with(DayOfWeek.MONDAY);
-                LocalDate weekEnd = weekStart.plusDays(6);
 
                 InternshipAttendanceWeek week = weekRepository
-                                .findByInternship_IdAndWeekStartLessThanEqualAndWeekEndGreaterThanEqual(
-                                                internshipId, date, date)
-                                .orElseGet(() -> weekRepository.save(
-                                                InternshipAttendanceWeek.builder()
-                                                                .internship(internship)
-                                                                .weekStart(weekStart)
-                                                                .weekEnd(weekEnd)
-                                                                .build()));
+                                .findByInternship_IdAndWeekStart(internshipId, weekStart)
+                                .orElseGet(() -> {
+                                        try {
+                                                InternshipAttendanceWeek newWeek = InternshipAttendanceWeek
+                                                                .create(internship, weekStart);
+
+                                                return weekRepository.save(newWeek);
+
+                                        } catch (DataIntegrityViolationException ex) {
+                                                return weekRepository
+                                                                .findByInternship_IdAndWeekStart(internshipId,
+                                                                                weekStart)
+                                                                .orElseThrow(() -> new BusinessException(
+                                                                                "Attendance week already exists",
+                                                                                HttpStatus.CONFLICT));
+                                        }
+                                });
+
+                if (week.getStatus() == WeekStatus.SUBMITTED ||
+                                week.getStatus() == WeekStatus.APPROVED) {
+
+                        throw new BusinessException(
+                                        "Cannot register attendance for a submitted or approved week",
+                                        HttpStatus.CONFLICT);
+                }
 
                 InternshipAttendance attendance = InternshipAttendance.builder()
                                 .internship(internship)
@@ -209,15 +222,29 @@ public class InternshipServiceImpl implements InternshipService {
                                 .findById(weekId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Week not found"));
 
-                internshipRepository
+                StudentInternship internship = internshipRepository
                                 .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
+                // APPROVE WEEK
                 week.approve("Approved");
 
+                // APPROVE ALL ATTENDANCES
                 attendanceRepository
                                 .findAllByWeek_IdAndWeek_Internship_Tenant_Id(weekId, tenantId)
                                 .forEach(a -> a.setStatus(AttendanceStatus.APPROVED));
+
+                // 🔹 Recalculate approved hours
+                double approvedHours = calculateApprovedHours(tenantId, internshipId);
+
+                // 🔹 Let domain decide if it can complete
+                if (internship.getStatus() == StudentInternshipStatus.ACTIVE) {
+                        try {
+                                internship.complete(approvedHours);
+                        } catch (BusinessException ignored) {
+                                // Not enough hours yet → do nothing
+                        }
+                }
         }
 
         @Override

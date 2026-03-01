@@ -1,9 +1,11 @@
 package com.klastr.klastrbackend.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +22,8 @@ import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.RegisterAttendanceRequest;
-import com.klastr.klastrbackend.repository.InternshipAttendanceRepository;
-import com.klastr.klastrbackend.repository.InternshipAttendanceWeekRepository;
-import com.klastr.klastrbackend.repository.OrganizationRepository;
-import com.klastr.klastrbackend.repository.StudentInternshipRepository;
-import com.klastr.klastrbackend.repository.StudentRepository;
-import com.klastr.klastrbackend.repository.TenantRepository;
+import com.klastr.klastrbackend.exception.BusinessException;
+import com.klastr.klastrbackend.repository.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -55,18 +53,14 @@ class InternshipApproveWeekIntegrationTest {
         @Test
         void shouldApproveWeekAndAllAttendances() {
 
-                // -------------------------
-                // Arrange
-                // -------------------------
-
                 Tenant tenant = tenantRepository.save(
                                 Tenant.builder()
-                                                .name("Test Tenant")
+                                                .name("Test Tenant " + UUID.randomUUID())
                                                 .build());
 
                 Organization organization = organizationRepository.save(
                                 Organization.builder()
-                                                .name("Test Org")
+                                                .name("Test Org " + UUID.randomUUID())
                                                 .tenant(tenant)
                                                 .build());
 
@@ -76,7 +70,7 @@ class InternshipApproveWeekIntegrationTest {
                                                 .organization(organization)
                                                 .firstName("John")
                                                 .lastName("Doe")
-                                                .email("john.doe@test.com")
+                                                .email("john.doe+" + UUID.randomUUID() + "@test.com")
                                                 .build());
 
                 CreateInternshipRequest createRequest = CreateInternshipRequest.builder()
@@ -95,39 +89,32 @@ class InternshipApproveWeekIntegrationTest {
                                 .findById(response.getId())
                                 .orElseThrow();
 
-                // DRAFT → APPROVED → ACTIVE
                 internship.approve();
                 internship.activate();
                 internshipRepository.save(internship);
 
-                RegisterAttendanceRequest attendanceRequest = new RegisterAttendanceRequest(
-                                LocalDate.now().minusDays(1),
-                                8);
-
                 internshipService.registerAttendance(
                                 tenant.getId(),
                                 internship.getId(),
-                                attendanceRequest);
+                                new RegisterAttendanceRequest(
+                                                LocalDate.now().minusDays(1),
+                                                8));
 
-                InternshipAttendanceWeek week = weekRepository.findAll().get(0);
+                InternshipAttendanceWeek week = weekRepository
+                                .findByInternship_Id(internship.getId())
+                                .get(0);
 
+                // SUBMIT
                 internshipService.submitWeek(
                                 tenant.getId(),
                                 internship.getId(),
                                 week.getId());
 
-                // -------------------------
-                // Act
-                // -------------------------
-
+                // APPROVE
                 internshipService.approveWeek(
                                 tenant.getId(),
                                 internship.getId(),
                                 week.getId());
-
-                // -------------------------
-                // Assert
-                // -------------------------
 
                 InternshipAttendanceWeek updatedWeek = weekRepository
                                 .findById(week.getId())
@@ -144,5 +131,72 @@ class InternshipApproveWeekIntegrationTest {
                 assertThat(attendances)
                                 .isNotEmpty()
                                 .allMatch(a -> a.getStatus() == AttendanceStatus.APPROVED);
+        }
+
+        @Test
+        void should_not_allow_register_attendance_when_week_is_submitted() {
+
+                Tenant tenant = tenantRepository.save(
+                                Tenant.builder()
+                                                .name("Test Tenant " + UUID.randomUUID())
+                                                .build());
+
+                Organization organization = organizationRepository.save(
+                                Organization.builder()
+                                                .name("Test Org " + UUID.randomUUID())
+                                                .tenant(tenant)
+                                                .build());
+
+                Student student = studentRepository.save(
+                                Student.builder()
+                                                .tenant(tenant)
+                                                .organization(organization)
+                                                .firstName("John")
+                                                .lastName("Doe")
+                                                .email("john.doe+" + UUID.randomUUID() + "@test.com")
+                                                .build());
+
+                CreateInternshipRequest createRequest = CreateInternshipRequest.builder()
+                                .studentId(student.getId())
+                                .organizationId(organization.getId())
+                                .academicYear(2025)
+                                .academicPeriod("SPRING")
+                                .requiredHours(20)
+                                .startDate(LocalDate.now().minusDays(5))
+                                .endDate(LocalDate.now().plusDays(30))
+                                .build();
+
+                var response = internshipService.create(tenant.getId(), createRequest);
+
+                StudentInternship internship = internshipRepository
+                                .findById(response.getId())
+                                .orElseThrow();
+
+                internship.approve();
+                internship.activate();
+                internshipRepository.save(internship);
+
+                internshipService.registerAttendance(
+                                tenant.getId(),
+                                internship.getId(),
+                                new RegisterAttendanceRequest(
+                                                LocalDate.now().minusDays(1),
+                                                8));
+
+                InternshipAttendanceWeek week = weekRepository
+                                .findByInternship_Id(internship.getId())
+                                .get(0);
+
+                internshipService.submitWeek(
+                                tenant.getId(),
+                                internship.getId(),
+                                week.getId());
+
+                assertThrows(BusinessException.class, () -> internshipService.registerAttendance(
+                                tenant.getId(),
+                                internship.getId(),
+                                new RegisterAttendanceRequest(
+                                                LocalDate.now().minusDays(2),
+                                                4)));
         }
 }
