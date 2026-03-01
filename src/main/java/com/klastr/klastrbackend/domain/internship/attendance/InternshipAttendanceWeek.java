@@ -10,7 +10,6 @@ import lombok.*;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -34,30 +33,36 @@ public class InternshipAttendanceWeek {
     @Column(nullable = false)
     private WeekStatus status = WeekStatus.OPEN;
 
-    // -------------------------------------------------
-    // STATE MACHINE
-    // -------------------------------------------------
+    // --------------------------------
+    // STATE MACHINE (delegated)
+    // --------------------------------
 
     public void submit() {
-        requireStatus(WeekStatus.OPEN);
-        this.status = WeekStatus.SUBMITTED;
+        this.status = this.status.submit();
     }
 
     public void approve(String comment) {
-        requireStatus(WeekStatus.SUBMITTED);
-        this.status = WeekStatus.APPROVED;
+        this.status = this.status.approve();
     }
 
     public void reject(String comment) {
-        requireStatus(WeekStatus.SUBMITTED);
-        this.status = WeekStatus.REJECTED;
+        this.status = this.status.reject();
     }
 
-    private void requireStatus(WeekStatus expected) {
-        if (this.status != expected) {
+    // --------------------------------
+    // Domain behavior
+    // --------------------------------
+
+    public void changeWeekDates(LocalDate start, LocalDate end) {
+        ensureEditable();
+        this.weekStart = start;
+        this.weekEnd = end;
+    }
+
+    private void ensureEditable() {
+        if (!status.isEditable()) {
             throw new IllegalStateException(
-                    "Invalid state transition. Expected: "
-                            + expected + ", but was: " + this.status);
+                    "Week cannot be modified in status: " + status);
         }
     }
 
