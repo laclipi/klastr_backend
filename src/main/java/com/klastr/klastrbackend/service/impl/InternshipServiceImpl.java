@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +54,6 @@ public class InternshipServiceImpl implements InternshipService {
 
                 StudentInternship internship = internshipMapper.toEntity(request, student, organization);
 
-                // 🔐 Multi-tenant seguro
                 internship.setTenant(student.getTenant());
 
                 internship = internshipRepository.save(internship);
@@ -97,7 +97,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.approve();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -109,7 +108,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.reject();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -121,7 +119,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.activate();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -133,7 +130,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.cancel();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -145,7 +141,6 @@ public class InternshipServiceImpl implements InternshipService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
                 internship.complete();
-
                 return internshipMapper.toResponse(internship);
         }
 
@@ -167,19 +162,28 @@ public class InternshipServiceImpl implements InternshipService {
                                         "Attendance already registered for this date",
                                         HttpStatus.CONFLICT);
                 }
+
                 LocalDate weekStart = date.with(DayOfWeek.MONDAY);
 
                 InternshipAttendanceWeek week = weekRepository
                                 .findByInternship_IdAndWeekStart(internshipId, weekStart)
                                 .orElseGet(() -> {
+                                        try {
+                                                InternshipAttendanceWeek newWeek = InternshipAttendanceWeek
+                                                                .create(internship, weekStart);
 
-                                        InternshipAttendanceWeek newWeek = InternshipAttendanceWeek.create(internship,
-                                                        weekStart);
+                                                return weekRepository.save(newWeek);
 
-                                        return weekRepository.save(newWeek);
+                                        } catch (DataIntegrityViolationException ex) {
+                                                return weekRepository
+                                                                .findByInternship_IdAndWeekStart(internshipId,
+                                                                                weekStart)
+                                                                .orElseThrow(() -> new BusinessException(
+                                                                                "Attendance week already exists",
+                                                                                HttpStatus.CONFLICT));
+                                        }
                                 });
 
-                // 🔒 Nueva regla de negocio
                 if (week.getStatus() == WeekStatus.SUBMITTED ||
                                 week.getStatus() == WeekStatus.APPROVED) {
 
@@ -216,7 +220,7 @@ public class InternshipServiceImpl implements InternshipService {
                                 .findById(weekId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Week not found"));
 
-                internshipRepository
+                StudentInternship internship = internshipRepository
                                 .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
@@ -225,6 +229,18 @@ public class InternshipServiceImpl implements InternshipService {
                 attendanceRepository
                                 .findAllByWeek_IdAndWeek_Internship_Tenant_Id(weekId, tenantId)
                                 .forEach(a -> a.setStatus(AttendanceStatus.APPROVED));
+
+                // 🔹 Recalcular horas aprobadas
+                Double approvedHours = attendanceRepository.sumApprovedHours(
+                                internshipId,
+                                AttendanceStatus.APPROVED);
+
+                double totalApproved = approvedHours != null ? approvedHours : 0.0;
+
+                // 🔹 Si alcanza horas requeridas → completar internship
+                if (totalApproved >= internship.getRequiredHours()) {
+                        internship.complete();
+                }
         }
 
         @Override
