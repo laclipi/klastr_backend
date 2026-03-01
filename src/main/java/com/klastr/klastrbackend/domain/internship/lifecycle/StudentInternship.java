@@ -3,28 +3,19 @@ package com.klastr.klastrbackend.domain.internship.lifecycle;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.springframework.http.HttpStatus;
+
 import com.klastr.klastrbackend.domain.base.BaseEntity;
 import com.klastr.klastrbackend.domain.organization.Organization;
 import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
+import com.klastr.klastrbackend.exception.BusinessException;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Table(name = "internships") // Se mantiene para no romper esquema existente
+@Table(name = "internships")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,23 +23,14 @@ import lombok.Setter;
 @Builder
 public class StudentInternship extends BaseEntity {
 
-    /**
-     * Alumno que realiza la FCT.
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    /**
-     * Organización donde se realiza la FCT.
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
-    /**
-     * Tenant al que pertenece la FCT.
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
@@ -59,9 +41,6 @@ public class StudentInternship extends BaseEntity {
     @Column(nullable = false, length = 20)
     private String academicPeriod;
 
-    /**
-     * Total de horas obligatorias que debe completar el alumno.
-     */
     @Column(nullable = false)
     private Integer requiredHours;
 
@@ -104,19 +83,25 @@ public class StudentInternship extends BaseEntity {
 
     public void cancel() {
         if (this.status == StudentInternshipStatus.COMPLETED) {
-            throw new IllegalStateException(
-                    "Completed internships cannot be cancelled");
+            throw new BusinessException(
+                    "Completed internships cannot be cancelled",
+                    HttpStatus.CONFLICT);
         }
         this.status = StudentInternshipStatus.CANCELLED;
     }
 
+    public boolean isCompleted() {
+        return this.status == StudentInternshipStatus.COMPLETED;
+    }
+
     private void requireStatus(StudentInternshipStatus expected) {
         if (this.status != expected) {
-            throw new IllegalStateException(
+            throw new BusinessException(
                     "Invalid state transition. Expected: "
                             + expected
                             + ", but was: "
-                            + this.status);
+                            + this.status,
+                    HttpStatus.CONFLICT);
         }
     }
 

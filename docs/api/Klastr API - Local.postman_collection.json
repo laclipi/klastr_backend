@@ -8,7 +8,7 @@
   },
   "item": [
     {
-      "name": "tenants",
+      "name": "Tenant",
       "item": [
         {
           "name": "CREATE Tenant",
@@ -28,12 +28,10 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/api/tenants",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/api/tenants",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "api",
                 "tenants"
@@ -51,16 +49,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/api/tenants/fcd01b4f-0523-472c-a813-fdbe4bc45d2c",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "api",
                 "tenants",
-                "fcd01b4f-0523-472c-a813-fdbe4bc45d2c"
+                "{{tenantId}}"
               ]
             }
           },
@@ -75,12 +71,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/api/tenants",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/api/tenants",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "api",
                 "tenants"
@@ -107,16 +101,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/api/tenants/fcd01b4f-0523-472c-a813-fdbe4bc45d2c",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "api",
                 "tenants",
-                "fcd01b4f-0523-472c-a813-fdbe4bc45d2c"
+                "{{tenantId}}"
               ]
             }
           },
@@ -131,16 +123,14 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/api/tenants/fcd01b4f-0523-472c-a813-fdbe4bc45d2c",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "api",
                 "tenants",
-                "fcd01b4f-0523-472c-a813-fdbe4bc45d2c"
+                "{{tenantId}}"
               ]
             }
           },
@@ -164,12 +154,10 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/api/tenants",
-              "protocol": "http",
+              "raw": "{{baseUrl}}/api/tenants",
               "host": [
-                "localhost"
+                "{{baseUrl}}"
               ],
-              "port": "8080",
               "path": [
                 "api",
                 "tenants"
@@ -229,10 +217,10 @@
       ]
     },
     {
-      "name": "organizations",
+      "name": "Organization",
       "item": [
         {
-          "name": "CREATE - Organization",
+          "name": "CREATE Organization",
           "request": {
             "auth": {
               "type": "noauth"
@@ -241,7 +229,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"name\": \"CEAC Barcelona\"\r\n}",
+              "raw": "{\r\n  \"name\": \"Empresa Tech SL\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -366,6 +354,395 @@
             }
           },
           "response": []
+        }
+      ]
+    },
+    {
+      "name": "Student",
+      "item": [
+        {
+          "name": "CREATE Student -  (Tenant scoped)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"firstName\": \"Laura\",\r\n  \"lastName\": \"Climent\",\r\n  \"email\": \"laura@klastr.com\",\r\n  \"organizationId\": \"0031d1c9-6e24-4649-9e9e-0125d1a836f4\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenants",
+                "{{tenantId}}",
+                "students"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Internship",
+      "item": [
+        {
+          "name": "Lifecycle",
+          "item": [
+            {
+              "name": "Approve Internship",
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "admin123",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "admin",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/internships/{{internshipId}}/approve",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "tenants",
+                    "{{tenantId}}",
+                    "internships",
+                    "{{internshipId}}",
+                    "approve"
+                  ]
+                },
+                "description": "{{baseUrl}}/api/tenants/{{tenantId}}/internships/{{internshipId}}/approve"
+              },
+              "response": []
+            },
+            {
+              "name": "Activate Intership",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/internships/{{internshipId}}/activate",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "tenants",
+                    "{{tenantId}}",
+                    "internships",
+                    "{{internshipId}}",
+                    "activate"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Internship - Create (Tenant scoped)",
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "022eeb57-b438-4982-8f9e-c79a8866d9df",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "user",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"studentId\": \"cfeb5bdc-bf75-43d9-ab4d-6d46b093a49d\",\r\n  \"organizationId\": \"0031d1c9-6e24-4649-9e9e-0125d1a836f4\",\r\n  \"academicYear\": 2026,\r\n  \"academicPeriod\": \"FCT\",\r\n  \"requiredHours\": 400,\r\n  \"startDate\": \"2026-02-01\",\r\n  \"endDate\": \"2026-05-31\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/tenants/{{tenantId}}/internships",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "tenants",
+                    "{{tenantId}}",
+                    "internships"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reject",
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "admin123",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "admin",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/tenants/{{tenantId}}/internships/{{internshipId}}/reject",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "tenants",
+                    "{{tenantId}}",
+                    "internships",
+                    "{{internshipId}}",
+                    "reject"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "complete",
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "admin123",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "admin",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/tenants/{{tenantId}}/internships/{{internshipId}}/complete",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "tenants",
+                    "{{tenantId}}",
+                    "internships",
+                    "{{internshipId}}",
+                    "complete"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "cancel",
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "admin123",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "admin",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/internships/{{internshipId}}/cancel",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "tenants",
+                    "{{tenantId}}",
+                    "internships",
+                    "{{internshipId}}",
+                    "cancel"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Queries",
+          "item": [
+            {
+              "name": "Find Internships By Student",
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "admin123",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "admin",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/internships/student/{{studentId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "tenants",
+                    "{{tenantId}}",
+                    "internships",
+                    "student",
+                    "{{studentId}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Find Internship By Id",
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "admin123",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "admin",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/tenants/{{tenantId}}/internships/{{internshipId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "tenants",
+                    "{{tenantId}}",
+                    "internships",
+                    "{{internshipId}}"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Attendance",
+          "item": []
         }
       ]
     }

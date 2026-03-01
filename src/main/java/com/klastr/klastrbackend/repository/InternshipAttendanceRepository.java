@@ -1,5 +1,7 @@
 package com.klastr.klastrbackend.repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,17 +12,24 @@ import com.klastr.klastrbackend.domain.internship.attendance.AttendanceStatus;
 import com.klastr.klastrbackend.domain.internship.attendance.InternshipAttendance;
 
 public interface InternshipAttendanceRepository
-    extends JpaRepository<InternshipAttendance, UUID> {
+                extends JpaRepository<InternshipAttendance, UUID> {
 
-  @Query("""
-      SELECT COALESCE(SUM(a.hoursWorked), 0)
-      FROM InternshipAttendance a
-      WHERE a.internship.id = :internshipId
-      AND a.status = :status
-      """)
-  Double sumApprovedHours(
-      @Param("internshipId") UUID internshipId,
-      @Param("status") AttendanceStatus status);
+        @Query("""
+                        SELECT COALESCE(SUM(a.hoursWorked), 0)
+                        FROM InternshipAttendance a
+                        WHERE a.internship.id = :internshipId
+                        AND a.status = :status
+                        """)
+        Double sumApprovedHours(
+                        @Param("internshipId") UUID internshipId,
+                        @Param("status") AttendanceStatus status);
 
-  long countByWeek_Id(UUID weekId);
+        long countByWeek_Id(UUID weekId);
+
+        boolean existsByInternship_IdAndDate(UUID internshipId, LocalDate date);
+
+        // 🔒 Tenant-safe version
+        List<InternshipAttendance> findAllByWeek_IdAndWeek_Internship_Tenant_Id(
+                        UUID weekId,
+                        UUID tenantId);
 }

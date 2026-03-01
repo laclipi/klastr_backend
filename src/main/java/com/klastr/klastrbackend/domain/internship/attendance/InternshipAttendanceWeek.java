@@ -1,19 +1,15 @@
 package com.klastr.klastrbackend.domain.internship.attendance;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.klastr.klastrbackend.domain.internship.lifecycle.StudentInternship;
-import com.klastr.klastrbackend.domain.user.User;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "internship_attendance_weeks")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -21,11 +17,9 @@ public class InternshipAttendanceWeek {
 
     @Id
     @GeneratedValue
-    @Column(nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "internship_id", nullable = false, updatable = false)
+    @ManyToOne(optional = false)
     private StudentInternship internship;
 
     @Column(nullable = false)
@@ -34,60 +28,46 @@ public class InternshipAttendanceWeek {
     @Column(nullable = false)
     private LocalDate weekEnd;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private WeekStatus status;
+    @Column(nullable = false)
+    private WeekStatus status = WeekStatus.OPEN;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "validated_by")
-    private User validatedBy;
-
-    private LocalDateTime validatedAt;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    // ==========================================
-    // LIFECYCLE
-    // ==========================================
+    // --------------------------------
+    // STATE MACHINE (delegated)
+    // --------------------------------
 
     public void submit() {
-        requireStatus(WeekStatus.OPEN);
-        this.status = WeekStatus.SUBMITTED;
+        this.status = this.status.submit();
     }
 
-    public void approve(User validator) {
-        requireStatus(WeekStatus.SUBMITTED);
-        this.status = WeekStatus.APPROVED;
-        this.validatedBy = validator;
-        this.validatedAt = LocalDateTime.now();
+    public void approve(String comment) {
+        this.status = this.status.approve();
     }
 
-    public void reject(User validator) {
-        requireStatus(WeekStatus.SUBMITTED);
-        this.status = WeekStatus.REJECTED;
-        this.validatedBy = validator;
-        this.validatedAt = LocalDateTime.now();
+    public void reject(String comment) {
+        this.status = this.status.reject();
     }
 
-    private void requireStatus(WeekStatus expected) {
-        if (this.status != expected) {
+    // --------------------------------
+    // Domain behavior
+    // --------------------------------
+
+    public void changeWeekDates(LocalDate start, LocalDate end) {
+        ensureEditable();
+        this.weekStart = start;
+        this.weekEnd = end;
+    }
+
+    private void ensureEditable() {
+        if (!status.isEditable()) {
             throw new IllegalStateException(
-                    "Invalid state transition. Expected: "
-                            + expected
-                            + ", but was: "
-                            + this.status);
+                    "Week cannot be modified in status: " + status);
         }
     }
 
-    // ==========================================
-    // PERSISTENCE
-    // ==========================================
-
     @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-
+    public void prePersist() {
         if (this.status == null) {
             this.status = WeekStatus.OPEN;
         }
