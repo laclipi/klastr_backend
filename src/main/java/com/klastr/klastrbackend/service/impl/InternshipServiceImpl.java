@@ -167,19 +167,26 @@ public class InternshipServiceImpl implements InternshipService {
                                         "Attendance already registered for this date",
                                         HttpStatus.CONFLICT);
                 }
-
                 LocalDate weekStart = date.with(DayOfWeek.MONDAY);
-                LocalDate weekEnd = weekStart.plusDays(6);
 
                 InternshipAttendanceWeek week = weekRepository
-                                .findByInternship_IdAndWeekStartLessThanEqualAndWeekEndGreaterThanEqual(
-                                                internshipId, date, date)
-                                .orElseGet(() -> weekRepository.save(
-                                                InternshipAttendanceWeek.builder()
-                                                                .internship(internship)
-                                                                .weekStart(weekStart)
-                                                                .weekEnd(weekEnd)
-                                                                .build()));
+                                .findByInternship_IdAndWeekStart(internshipId, weekStart)
+                                .orElseGet(() -> {
+
+                                        InternshipAttendanceWeek newWeek = InternshipAttendanceWeek.create(internship,
+                                                        weekStart);
+
+                                        return weekRepository.save(newWeek);
+                                });
+
+                // 🔒 Nueva regla de negocio
+                if (week.getStatus() == WeekStatus.SUBMITTED ||
+                                week.getStatus() == WeekStatus.APPROVED) {
+
+                        throw new BusinessException(
+                                        "Cannot register attendance for a submitted or approved week",
+                                        HttpStatus.CONFLICT);
+                }
 
                 InternshipAttendance attendance = InternshipAttendance.builder()
                                 .internship(internship)

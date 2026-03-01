@@ -10,9 +10,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = { "internship_id", "week_start" }))
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE) // 🔒 importante
+@AllArgsConstructor
 @Builder
 public class InternshipAttendanceWeek {
 

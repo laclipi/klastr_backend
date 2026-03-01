@@ -32,4 +32,8 @@ public interface InternshipAttendanceWeekRepository
         Optional<InternshipAttendanceWeek> findByIdAndInternship_Tenant_Id(
                         UUID weekId,
                         UUID tenantId);
+
+        boolean existsByInternship_IdAndWeekStart(UUID internshipId, LocalDate weekStart);
+
+        Optional<InternshipAttendanceWeek> findByInternship_IdAndWeekStart(UUID internshipId, LocalDate weekStart);
 }
