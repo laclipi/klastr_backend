@@ -1,6 +1,7 @@
 package com.klastr.klastrbackend.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -18,6 +19,7 @@ import com.klastr.klastrbackend.domain.student.Student;
 import com.klastr.klastrbackend.domain.tenant.Tenant;
 import com.klastr.klastrbackend.dto.internship.CreateInternshipRequest;
 import com.klastr.klastrbackend.dto.internship.RegisterAttendanceRequest;
+import com.klastr.klastrbackend.exception.BusinessException;
 import com.klastr.klastrbackend.repository.InternshipAttendanceWeekRepository;
 import com.klastr.klastrbackend.repository.OrganizationRepository;
 import com.klastr.klastrbackend.repository.StudentInternshipRepository;
@@ -131,5 +133,83 @@ class InternshipServiceIntegrationTest {
 
                 assertThat(updatedInternship.getStatus())
                                 .isEqualTo(StudentInternshipStatus.COMPLETED);
+        }
+
+        @Test
+        void should_not_complete_internship_when_hours_are_insufficient() {
+
+                // -------------------------
+                // Arrange
+                // -------------------------
+
+                Tenant tenant = tenantRepository.save(
+                                Tenant.builder()
+                                                .name("Tenant-" + UUID.randomUUID())
+                                                .build());
+
+                Organization organization = organizationRepository.save(
+                                Organization.builder()
+                                                .name("Organization-" + UUID.randomUUID())
+                                                .tenant(tenant)
+                                                .build());
+
+                Student student = studentRepository.save(
+                                Student.builder()
+                                                .tenant(tenant)
+                                                .organization(organization)
+                                                .firstName("John")
+                                                .lastName("Doe")
+                                                .email("john.doe+" + UUID.randomUUID() + "@test.com")
+                                                .build());
+
+                CreateInternshipRequest createRequest = CreateInternshipRequest.builder()
+                                .studentId(student.getId())
+                                .organizationId(organization.getId())
+                                .academicYear(2025)
+                                .academicPeriod("SPRING")
+                                .requiredHours(20) // requiere 20
+                                .startDate(LocalDate.now().minusDays(5))
+                                .endDate(LocalDate.now().plusDays(30))
+                                .build();
+
+                var response = internshipService.create(tenant.getId(), createRequest);
+
+                StudentInternship internship = internshipRepository
+                                .findById(response.getId())
+                                .orElseThrow();
+
+                internship.approve();
+                internship.activate();
+                internshipRepository.save(internship);
+
+                // Solo registramos 8 horas
+                internshipService.registerAttendance(
+                                tenant.getId(),
+                                internship.getId(),
+                                new RegisterAttendanceRequest(
+                                                LocalDate.now().minusDays(1),
+                                                8));
+
+                InternshipAttendanceWeek week = weekRepository
+                                .findByInternship_Id(internship.getId())
+                                .get(0);
+
+                internshipService.submitWeek(
+                                tenant.getId(),
+                                internship.getId(),
+                                week.getId());
+
+                internshipService.approveWeek(
+                                tenant.getId(),
+                                internship.getId(),
+                                week.getId());
+
+                // -------------------------
+                // Act + Assert
+                // -------------------------
+
+                assertThrows(BusinessException.class, () -> internshipService.complete(
+                                tenant.getId(),
+                                internship.getId()));
         }
 }

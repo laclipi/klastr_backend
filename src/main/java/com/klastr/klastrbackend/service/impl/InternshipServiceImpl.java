@@ -140,10 +140,12 @@ public class InternshipServiceImpl implements InternshipService {
                                 .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
-                internship.complete();
+                double approvedHours = calculateApprovedHours(tenantId, internshipId);
+
+                internship.complete(approvedHours);
+
                 return internshipMapper.toResponse(internship);
         }
-
         // =====================================================
         // ATTENDANCE
         // =====================================================
@@ -224,22 +226,24 @@ public class InternshipServiceImpl implements InternshipService {
                                 .findByIdAndTenant_Id(internshipId, tenantId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Internship not found"));
 
+                // APPROVE WEEK
                 week.approve("Approved");
 
+                // APPROVE ALL ATTENDANCES
                 attendanceRepository
                                 .findAllByWeek_IdAndWeek_Internship_Tenant_Id(weekId, tenantId)
                                 .forEach(a -> a.setStatus(AttendanceStatus.APPROVED));
 
-                // 🔹 Recalcular horas aprobadas
-                Double approvedHours = attendanceRepository.sumApprovedHours(
-                                internshipId,
-                                AttendanceStatus.APPROVED);
+                // 🔹 Recalculate approved hours
+                double approvedHours = calculateApprovedHours(tenantId, internshipId);
 
-                double totalApproved = approvedHours != null ? approvedHours : 0.0;
-
-                // 🔹 Si alcanza horas requeridas → completar internship
-                if (totalApproved >= internship.getRequiredHours()) {
-                        internship.complete();
+                // 🔹 Let domain decide if it can complete
+                if (internship.getStatus() == StudentInternshipStatus.ACTIVE) {
+                        try {
+                                internship.complete(approvedHours);
+                        } catch (BusinessException ignored) {
+                                // Not enough hours yet → do nothing
+                        }
                 }
         }
 

@@ -76,8 +76,15 @@ public class StudentInternship extends BaseEntity {
         this.status = StudentInternshipStatus.ACTIVE;
     }
 
-    public void complete() {
+    public void complete(double approvedHours) {
         requireStatus(StudentInternshipStatus.ACTIVE);
+
+        if (approvedHours < this.requiredHours) {
+            throw new BusinessException(
+                    "Cannot complete internship. Approved hours are insufficient",
+                    HttpStatus.CONFLICT);
+        }
+
         this.status = StudentInternshipStatus.COMPLETED;
     }
 
