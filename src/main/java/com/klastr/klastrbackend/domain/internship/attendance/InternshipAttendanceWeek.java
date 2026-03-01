@@ -1,5 +1,6 @@
 package com.klastr.klastrbackend.domain.internship.attendance;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -11,7 +12,7 @@ import lombok.*;
 @Entity
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE) // 🔒 importante
 @Builder
 public class InternshipAttendanceWeek {
 
@@ -34,6 +35,40 @@ public class InternshipAttendanceWeek {
     private WeekStatus status = WeekStatus.OPEN;
 
     // --------------------------------
+    // FACTORY (ISO week creation)
+    // --------------------------------
+
+    public static InternshipAttendanceWeek create(
+            StudentInternship internship,
+            LocalDate weekStart) {
+
+        if (internship == null) {
+            throw new IllegalArgumentException("internship cannot be null");
+        }
+
+        validateWeekStart(weekStart);
+
+        return InternshipAttendanceWeek.builder()
+                .internship(internship)
+                .weekStart(weekStart)
+                .weekEnd(weekStart.plusDays(6))
+                .status(WeekStatus.OPEN)
+                .build();
+    }
+
+    private static void validateWeekStart(LocalDate weekStart) {
+
+        if (weekStart == null) {
+            throw new IllegalArgumentException("weekStart cannot be null");
+        }
+
+        if (weekStart.getDayOfWeek() != DayOfWeek.MONDAY) {
+            throw new IllegalStateException(
+                    "Week must start on Monday (ISO-8601)");
+        }
+    }
+
+    // --------------------------------
     // STATE MACHINE (delegated)
     // --------------------------------
 
@@ -53,10 +88,13 @@ public class InternshipAttendanceWeek {
     // Domain behavior
     // --------------------------------
 
-    public void changeWeekDates(LocalDate start, LocalDate end) {
+    public void changeWeekDates(LocalDate newStart) {
+
         ensureEditable();
-        this.weekStart = start;
-        this.weekEnd = end;
+        validateWeekStart(newStart);
+
+        this.weekStart = newStart;
+        this.weekEnd = newStart.plusDays(6);
     }
 
     private void ensureEditable() {
