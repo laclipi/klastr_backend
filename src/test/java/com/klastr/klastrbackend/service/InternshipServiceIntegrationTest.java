@@ -123,11 +123,6 @@ class InternshipServiceIntegrationTest {
                                 internship.getId(),
                                 week.getId());
 
-                // Ahora completar internship
-                internshipService.complete(
-                                tenant.getId(),
-                                internship.getId());
-
                 // -------------------------
                 // Assert
                 // -------------------------
